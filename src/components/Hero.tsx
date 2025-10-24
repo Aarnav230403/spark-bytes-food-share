@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-food-sharing.jpg";
 
 const Hero = () => {
@@ -19,13 +20,15 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button 
-                size="lg" 
-                className="bg-white text-primary hover:bg-white/90 shadow-card-lg text-lg px-8 py-6 h-auto"
-              >
-                Join the Beta
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link to="/auth">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-primary hover:bg-white/90 shadow-card-lg text-lg px-8 py-6 h-auto"
+                >
+                  Join the Beta
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
               <Button 
                 size="lg" 
                 variant="outline" 
