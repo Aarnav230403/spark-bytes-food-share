@@ -11,10 +11,41 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
 
+  // Added sign-up fields + error state
+  const [fullName, setFullName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Form validation and authentication logic will go here
-    console.log("Form submitted:", { email, password });
+    if (isLogin) {
+      // Login flow
+      console.log("Logging in:", { email, password });
+      //TODO: Integrate with backend authentication call login API
+      return;
+    }
+    // Sign-up flow validations
+    if (!fullName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Please enter your BU email.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const signupPayload = { fullName, email, password };
+    console.log("Signing up:", signupPayload);
+    // TODO: call signup API
+
   };
 
   return (
@@ -35,18 +66,32 @@ const Auth = () => {
             </CardTitle>
             <CardDescription className="text-center">
               {isLogin
-                ? "Sign in to receive leftover food alerts"
-                : "Join the BU community effort to reduce food waste"}
+                ? "Sign in to manage your event reservations"
+                : "Join SparkBytes to discover and manage campus events"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Full name only for sign up */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Full Name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@bu.edu"
+                  placeholder="student@bu.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -63,6 +108,20 @@ const Auth = () => {
                   required
                 />
               </div>
+              {/* Confirm password only for sign up */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
               {isLogin && (
                 <div className="text-right">
                   <Link to="/forgot-password" className="text-sm text-primary hover:text-primary-dark transition-colors">
@@ -70,6 +129,9 @@ const Auth = () => {
                   </Link>
                 </div>
               )}
+
+              {error && <div className="text-sm text-red-600">{error}</div>}
+
               <Button type="submit" className="w-full" size="lg">
                 {isLogin ? "Log In" : "Sign Up"}
               </Button>
@@ -118,7 +180,14 @@ const Auth = () => {
             <div className="text-sm text-center text-muted-foreground">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <button
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setFullName("");
+                  setEmail("");
+                  setPassword("");
+                  setConfirmPassword("");
+                  setError(null);
+                }}
                 className="text-primary hover:text-primary-dark transition-colors font-medium"
               >
                 {isLogin ? "Sign up" : "Log in"}
@@ -130,7 +199,7 @@ const Auth = () => {
 
       {/* Footer */}
       <footer className="p-6 text-center text-sm text-muted-foreground">
-        <p>Part of the BU community effort to reduce food waste</p>
+        <p>Part of the BU community effort to reduce food waste!</p>
       </footer>
     </div>
   );
