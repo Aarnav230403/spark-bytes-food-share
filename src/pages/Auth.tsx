@@ -21,7 +21,6 @@ const handleSubmit = async (e: React.FormEvent) => {
   setError(null);
 
   if (isLogin) {
-    // ----- LOGIN FLOW -----
     // Attempt to sign in the user using Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -32,16 +31,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       // If credentials are invalid or Supabase returns an error
       setError(error.message);
     } else {
-      console.log("✅ Logged in successfully:", data);
+      console.log("Logged in successfully:", data);
       alert("Login successful!");
-      // Redirect to homepage or dashboard after login (optional)
-      // window.location.href = "/";
     }
 
     return;
   }
-
-  // ----- SIGN-UP FLOW -----
   // Input validation before attempting to register
   if (!fullName.trim()) {
     setError("Please enter your full name.");
@@ -65,7 +60,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     email,
     password,
     options: {
-      // Optional: store additional user info (like full name)
       data: { full_name: fullName },
     },
   });
@@ -74,7 +68,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // Show any registration errors returned by Supabase
     setError(error.message);
   } else {
-    console.log("✅ Sign-up successful:", data);
+    console.log("Sign-up successful:", data);
     alert("Sign-up successful! Please check your email to verify your account.");
   }
 };

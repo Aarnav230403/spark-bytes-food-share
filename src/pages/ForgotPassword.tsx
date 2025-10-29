@@ -4,26 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { supabase } from "@/lib/supabaseClient";
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-        setSuccess(null);
+    const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
 
         if (!email.trim()) {
             setError("Please enter your email.");
             return;
         }
 
-        // TODO: call password reset API (backend implementation needed)
-        console.log("Send reset link to:", email);
-        setSuccess("If an account with that email exists, a reset link has been sent.");
-    };
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: "http://localhost:8080/update-password"
+        });
+
+        if (error) {
+            setError(error.message);
+        } else {
+            setSuccess("If an account with that email exists, a reset link has been sent.");
+        }
+};
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
