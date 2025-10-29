@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
+import { supabase } from "@/lib/supabaseClient";// Import supabase client
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,37 +16,68 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLogin) {
-      // Login flow
-      console.log("Logging in:", { email, password });
-      //TODO: Integrate with backend authentication call login API
-      return;
-    }
-    // Sign-up flow validations
-    if (!fullName.trim()) {
-      setError("Please enter your full name.");
-      return;
-    }
-    if (!email.trim()) {
-      setError("Please enter your BU email.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+
+  if (isLogin) {
+    // ----- LOGIN FLOW -----
+    // Attempt to sign in the user using Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      // If credentials are invalid or Supabase returns an error
+      setError(error.message);
+    } else {
+      console.log("✅ Logged in successfully:", data);
+      alert("Login successful!");
+      // Redirect to homepage or dashboard after login (optional)
+      // window.location.href = "/";
     }
 
-    const signupPayload = { fullName, email, password };
-    console.log("Signing up:", signupPayload);
-    // TODO: call signup API
+    return;
+  }
 
-  };
+  // ----- SIGN-UP FLOW -----
+  // Input validation before attempting to register
+  if (!fullName.trim()) {
+    setError("Please enter your full name.");
+    return;
+  }
+  if (!email.trim()) {
+    setError("Please enter your BU email.");
+    return;
+  }
+  if (password.length < 6) {
+    setError("Password must be at least 6 characters.");
+    return;
+  }
+  if (password !== confirmPassword) {
+    setError("Passwords do not match.");
+    return;
+  }
+
+  // Call Supabase sign-up API to register new user
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      // Optional: store additional user info (like full name)
+      data: { full_name: fullName },
+    },
+  });
+
+  if (error) {
+    // Show any registration errors returned by Supabase
+    setError(error.message);
+  } else {
+    console.log("✅ Sign-up successful:", data);
+    alert("Sign-up successful! Please check your email to verify your account.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
