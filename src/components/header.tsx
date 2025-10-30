@@ -77,11 +77,11 @@ export default function Header() {
         <Menu mode="horizontal" items={menuItems} style={styles.menu} />
         <Button
           type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate("/create-event")}
-          style={styles.button}
-        >
-          Create Event
+            icon={<PlusOutlined />}
+            onClick={() => setOpen(true)}
+            style={styles.button}
+          >
+            Create Event
         </Button>
       </div>
     </header><CreateEventModal open={open} onClose={() => setOpen(false)} />
