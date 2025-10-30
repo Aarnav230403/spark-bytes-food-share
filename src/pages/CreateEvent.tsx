@@ -12,9 +12,7 @@ export default function CreateEventModal({
   onClose: () => void;
 }) {
   const [form] = Form.useForm();
-  const [foodItems, setFoodItems] = useState<
-    { id: string; name: string; qty: number }[]
-  >([]);
+  const [foodItems, setFoodItems] = useState<{ id: string; name: string; qty: number }[]>([]);
   const [foodName, setFoodName] = useState("");
   const [foodQty, setFoodQty] = useState(1);
 
@@ -23,23 +21,20 @@ export default function CreateEventModal({
 
   const addFood = () => {
     if (!foodName.trim()) return;
-    setFoodItems([
-      ...foodItems,
-      { id: Date.now().toString(), name: foodName, qty: foodQty },
-    ]);
+    setFoodItems([...foodItems, { id: Date.now().toString(), name: foodName, qty: foodQty }]);
     setFoodName("");
     setFoodQty(1);
   };
 
-  const removeFood = (id: string) =>
-    setFoodItems(foodItems.filter((f) => f.id !== id));
+  const removeFood = (id: string) => setFoodItems(foodItems.filter((f) => f.id !== id));
 
   const handleSubmit = async (values: any) => {
     const newEvent = {
       title: values.title,
       location: values.location,
-      start_time: values.start.format("HH:mm"),
-      end_time: values.end.format("HH:mm"),
+      date: values.date.format("YYYY-MM-DD"),
+      start_time: values.start.format("h:mm A"),
+      end_time: values.end.format("h:mm A"),
       dietary: values.dietary || [],
       campus: values.campus || [],
       food_items: foodItems,
@@ -49,25 +44,18 @@ export default function CreateEventModal({
     const { error } = await supabase.from("events").insert([newEvent]);
 
     if (error) {
-      console.error(error);
+      console.error("Supabase insert error:", error);
       message.error("Error creating event");
     } else {
       message.success("Event created!");
       form.resetFields();
       setFoodItems([]);
-      onClose(); // close modal after successful creation
+      onClose();
     }
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      title="Create Event"
-      centered
-      width={600}
-    >
+    <Modal open={open} onCancel={onClose} footer={null} title="Create Event" centered width={600}>
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item
           label="Event Title"
@@ -85,46 +73,43 @@ export default function CreateEventModal({
           <Input />
         </Form.Item>
         <Form.Item
-        label="Event Date"
-        name="date"
+          label="Event Date"
+          name="date"
           rules={[{ required: true, message: "Please select a date" }]}
-              >
+        >
           <DatePicker format="MMMM D, YYYY" style={{ width: "100%" }} />
-          </Form.Item>
+        </Form.Item>
 
         <div style={{ display: "flex", gap: 12 }}>
           <Form.Item
-           label="Start Time"
-           name="start"
-           rules={[{ required: true, message: "Select start time" }]}
-          style={{ flex: 1 }}
-           >
-         <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
+            label="Start Time"
+            name="start"
+            rules={[{ required: true, message: "Select start time" }]}
+            style={{ flex: 1 }}
+          >
+            <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
           </Form.Item>
+
           <Form.Item
-          label="End Time"
-          name="end"
-           dependencies={["start"]}
-          rules={[
-          { required: true, message: "Select end time" },
-          ({ getFieldValue }) => ({
-               validator(_, value) {
-                const start = getFieldValue("start");
-                if (!start || !value) return Promise.resolve();
-                if (value.isAfter(start)) {
-            return Promise.resolve();
-            }
-             return Promise.reject(
-            new Error("End time must be after start time")
-          );
-        },
-      }),
-    ]}
-    style={{ flex: 1 }}
-  >
-    <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
-  </Form.Item>
-</div>
+            label="End Time"
+            name="end"
+            dependencies={["start"]}
+            rules={[
+              { required: true, message: "Select end time" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const start = getFieldValue("start");
+                  if (!start || !value) return Promise.resolve();
+                  if (value.isAfter(start)) return Promise.resolve();
+                  return Promise.reject(new Error("End time must be after start time"));
+                },
+              }),
+            ]}
+            style={{ flex: 1 }}
+          >
+            <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
+          </Form.Item>
+        </div>
 
         <Form.Item label="Dietary Restrictions" name="dietary">
           <Checkbox.Group options={dietary} />
@@ -136,20 +121,28 @@ export default function CreateEventModal({
 
         <Form.Item label="Available Food Items">
           <div style={{ display: "flex", gap: 8 }}>
-            <Input
-              placeholder="Food name"
-              value={foodName}
-              onChange={(e) => setFoodName(e.target.value)}
-              onPressEnter={addFood}
-            />
-            <Input
-              type="number"
-              min={1}
-              value={foodQty}
-              onChange={(e) => setFoodQty(parseInt(e.target.value) || 1)}
-              style={{ width: 70 }}
-            />
-            <Button icon={<PlusOutlined />} onClick={addFood} />
+            <Form.Item label="Food name" style={{ marginBottom: 0, flex: 1 }}>
+              <Input
+                id="foodName"
+                placeholder="Food name"
+                value={foodName}
+                onChange={(e) => setFoodName(e.target.value)}
+                onPressEnter={addFood}
+              />
+            </Form.Item>
+
+            <Form.Item label="Qty" style={{ marginBottom: 0 }}>
+              <Input
+                id="foodQty"
+                type="number"
+                min={1}
+                value={foodQty}
+                onChange={(e) => setFoodQty(parseInt(e.target.value) || 1)}
+                style={{ width: 70 }}
+              />
+            </Form.Item>
+
+            <Button icon={<PlusOutlined />} onClick={addFood} aria-label="Add food" />
           </div>
           <List
             dataSource={foodItems}
@@ -161,6 +154,7 @@ export default function CreateEventModal({
                     danger
                     onClick={() => removeFood(f.id)}
                     key="remove"
+                    aria-label={`Remove ${f.name}`}
                   >
                     remove
                   </Button>,
