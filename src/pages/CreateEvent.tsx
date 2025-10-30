@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Modal, Form, Input, Button, Checkbox, List, message, TimePicker, } from "antd";
+import { Modal, Form, Input, Button, Checkbox, List, message, TimePicker, DatePicker } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { supabase } from "../lib/supabaseClient";
 
@@ -87,22 +87,37 @@ export default function CreateEventModal({
 
         <div style={{ display: "flex", gap: 12 }}>
           <Form.Item
-            label="Start Time"
-            name="start"
-            rules={[{ required: true, message: "Select start time" }]}
-            style={{ flex: 1 }}
-          >
-            <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
+           label="Start Time"
+           name="start"
+           rules={[{ required: true, message: "Select start time" }]}
+          style={{ flex: 1 }}
+           >
+         <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
-            label="End Time"
-            name="end"
-            rules={[{ required: true, message: "Select end time" }]}
-            style={{ flex: 1 }}
-          >
-            <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
-          </Form.Item>
-        </div>
+          label="End Time"
+          name="end"
+           dependencies={["start"]}
+          rules={[
+          { required: true, message: "Select end time" },
+          ({ getFieldValue }) => ({
+               validator(_, value) {
+                const start = getFieldValue("start");
+                if (!start || !value) return Promise.resolve();
+                if (value.isAfter(start)) {
+            return Promise.resolve();
+            }
+             return Promise.reject(
+            new Error("End time must be after start time")
+          );
+        },
+      }),
+    ]}
+    style={{ flex: 1 }}
+  >
+    <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
+  </Form.Item>
+</div>
 
         <Form.Item label="Dietary Restrictions" name="dietary">
           <Checkbox.Group options={dietary} />
