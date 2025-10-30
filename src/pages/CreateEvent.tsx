@@ -121,7 +121,7 @@ export default function CreateEventModal({
 
         <Form.Item label="Available Food Items">
           <div style={{ display: "flex", gap: 8 }}>
-            <Form.Item label="Food name" style={{ marginBottom: 0, flex: 1 }}>
+            <Form.Item label="Item" style={{ marginBottom: 0, flex: 1 }}>
               <Input
                 id="foodName"
                 placeholder="Food name"
