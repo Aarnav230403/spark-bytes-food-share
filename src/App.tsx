@@ -25,9 +25,6 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/update-password" element={<UpdatePassword />} />
           <Route path="/homepage" element={<HomePage/>} />
-          <Route path="/create-event" element={<CreateEventModal open={false} onClose={function (): void {
-            throw new Error("Function not implemented.");
-          } }/>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

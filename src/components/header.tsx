@@ -1,9 +1,12 @@
 import { Button, Menu } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import CreateEventModal from "@/pages/CreateEvent";
 
 export default function Header() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   const menuItems = [
     { key: "events", label: "Events" },
@@ -65,7 +68,7 @@ export default function Header() {
   };
 
   return (
-    <header style={styles.header}>
+    <><header style={styles.header}>
       <div style={styles.inner}>
         <div style={styles.left}>
           <div style={styles.logoBox}>TT</div>
@@ -81,6 +84,7 @@ export default function Header() {
           Create Event
         </Button>
       </div>
-    </header>
+    </header><CreateEventModal open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }
