@@ -92,7 +92,7 @@ export default function CreateEventModal({
             rules={[{ required: true, message: "Select start time" }]}
             style={{ flex: 1 }}
           >
-            <TimePicker format="HH:mm" style={{ width: "100%" }} />
+            <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             label="End Time"
@@ -100,7 +100,7 @@ export default function CreateEventModal({
             rules={[{ required: true, message: "Select end time" }]}
             style={{ flex: 1 }}
           >
-            <TimePicker format="HH:mm" style={{ width: "100%" }} />
+            <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
           </Form.Item>
         </div>
 
