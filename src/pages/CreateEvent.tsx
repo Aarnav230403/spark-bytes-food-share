@@ -84,6 +84,13 @@ export default function CreateEventModal({
         >
           <Input />
         </Form.Item>
+        <Form.Item
+        label="Event Date"
+        name="date"
+          rules={[{ required: true, message: "Please select a date" }]}
+              >
+          <DatePicker format="MMMM D, YYYY" style={{ width: "100%" }} />
+          </Form.Item>
 
         <div style={{ display: "flex", gap: 12 }}>
           <Form.Item
