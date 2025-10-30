@@ -16,7 +16,7 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // helper to check BU email
+  // helper to check BU email validation
   const isBuEmail = (value: string) => /@bu\.edu$/i.test(value.trim());
 
   const handleSubmit = async (e: React.FormEvent) => {
