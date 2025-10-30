@@ -17,7 +17,7 @@ export default function Header() {
       top: 0,
       zIndex: 100,
       width: "100%",
-      backgroundColor: "#fff",
+      backgroundColor: "#ffffffce",
       borderBottom: "1px solid #f0f0f0",
     },
     inner: {
@@ -59,6 +59,7 @@ export default function Header() {
     button: {
       display: "flex",
       alignItems: "center",
+      backgroundColor: "#CC0000",
       gap: 4,
     },
   };

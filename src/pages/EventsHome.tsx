@@ -58,7 +58,7 @@ export default function HomePage() {
           </div>
         ) : events.length === 0 ? (
           <p style={{ textAlign: "center", color: "#888" }}>
-            No events yet — create one to get started!
+            No events yet. Please check back later!
           </p>
         ) : (
           <Row gutter={[16, 16]} justify="center">
