@@ -82,7 +82,7 @@ export default function CreateEventModal({
 
         <div style={{ display: "flex", gap: 12 }}>
           <Form.Item
-            label="Start Time"
+            label="Pickup Start Time"
             name="start"
             rules={[{ required: true, message: "Select start time" }]}
             style={{ flex: 1 }}
@@ -91,7 +91,7 @@ export default function CreateEventModal({
           </Form.Item>
 
           <Form.Item
-            label="End Time"
+            label="Pickup End Time"
             name="end"
             dependencies={["start"]}
             rules={[

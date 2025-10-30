@@ -76,7 +76,7 @@ export default function HomePage() {
                     <strong>Location:</strong> {event.location}
                   </p>
                   <p>
-                    <strong>Time:</strong> {event.start_time} – {event.end_time}
+                    <strong>Pickup Time:</strong> {event.start_time} – {event.end_time}
                   </p>
                   <p>
                     <strong>Campus:</strong>{" "}
