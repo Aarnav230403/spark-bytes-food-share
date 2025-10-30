@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
-
+  // added to navigate after to a new page
+  const navigate = useNavigate(); 
   // Added sign-up fields + error state
   const [fullName, setFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,6 +37,7 @@ const Auth = () => {
       } else {
         console.log("Logged in successfully:", data);
         alert("Login successful!");
+        navigate("/homepage"); // Redirect to homepage after successful login
       }
 
       return;
