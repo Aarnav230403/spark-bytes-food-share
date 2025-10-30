@@ -1,9 +1,9 @@
 import { Button, Menu } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 
 export default function Header() {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const menuItems = [
     { key: "events", label: "Events" },
@@ -74,7 +74,7 @@ export default function Header() {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => router.push("/create-event")}
+          onClick={() => navigate("/create-event")}
           style={styles.button}
         >
           Create Event
