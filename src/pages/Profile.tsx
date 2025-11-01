@@ -9,6 +9,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
 
+  // need to impliment saved choice for phone number and email notification preference
+  // need to impliment text box for phone
+  // need to impliment name change saving
+  // could impliment profile picture upload? password change from inside?
+  // email fetches from supabase and cannot be changed at the moment. should it be able to be changed and then updated in the auth?
+
   useEffect(() => {
     const fetchUser = async () => {
       setLoading(true);
