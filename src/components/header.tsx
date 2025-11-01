@@ -9,9 +9,9 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   const menuItems = [
-    { key: "events", label: "Events" },
-    { key: "reservations", label: "My Reservations" },
-    { key: "profile", label: "Profile" },
+    { key: "events", label: "Events", onClick: () => navigate("/homepage") },
+    { key: "reservations", label: "My Reservations" }, // add reservation page redirection once done
+    { key: "profile", label: "Profile", onClick: () => navigate("/profile") },
   ];
 
   const styles = {
