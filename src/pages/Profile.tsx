@@ -8,6 +8,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // need to impliment saved choice for phone number and email notification preference
   // need to impliment text box for phone
@@ -15,30 +16,90 @@ export default function ProfilePage() {
   // could impliment profile picture upload? password change from inside?
   // email fetches from supabase and cannot be changed at the moment. should it be able to be changed and then updated in the auth?
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.auth.getUser();
 
-      if (error || !data?.user) {
-        message.error("Unable to load user email");
-        setEmail(null);
-      } else {
-        setEmail(data.user.email);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        message.error("Unable to load user information");
+        setLoading(false);
+        return;
       }
+
+      const user = userData.user;
+      setUserId(user.id);
+      setEmail(user.email);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError && profileError.code === "PGRST116") {
+        console.warn("No profile found. Creating new record...");
+
+        const { error: insertError } = await supabase.from("profiles").insert({
+          id: user.id,
+          full_name: "",
+          email_notifications: false,
+          sms_notifications: false,
+        });
+
+        if (insertError) {
+          console.error("Failed to create new profile:", insertError.message);
+          message.error("Failed to create profile record.");
+        } else {
+          console.log("✅ Created new profile for:", user.email);
+        }
+      } else if (profileError) {
+        console.error("Failed to load profile:", profileError.message);
+        message.warning("Profile load error, using default values");
+      }
+
+      form.setFieldsValue({
+        full_name: profile?.full_name || "",
+        email_notifications: profile?.email_notifications ?? false,
+        sms_notifications: profile?.sms_notifications ?? false,
+      });
+
       setLoading(false);
     };
 
-    fetchUser();
-  }, []);
+    fetchProfile();
+  }, [form]);
 
-  const handleSave = () => {
+  const handleSave = async (values: any) => {
+
+
+    if (!userId) {
+      message.error("User not loaded yet");
+      return;
+    }
+    console.log("Form values before save:", values);
     setSaving(true);
-    setTimeout(() => {
-      message.success("Profile updated (test)");
-      setSaving(false);
-    }, 800);
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: values.full_name,
+        email_notifications: values.email_notifications,
+        sms_notifications: values.sms_notifications,
+      })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("Update failed:", error.message);
+      message.error("Failed to update profile");
+    } else {
+      message.success("Profile updated successfully!");
+    }
+
+    setSaving(false);
   };
+
 
   if (loading) {
     return (
@@ -98,25 +159,23 @@ export default function ProfilePage() {
               <Input placeholder="Your name" />
             </Form.Item>
 
-            <Form.Item label="Notification Preferences" style={{ marginBottom: 8 }}>
-              <Form.Item
-                name="email_notifications"
-                valuePropName="checked"
-                style={{ marginBottom: 4 }}
-              >
-                <Switch checkedChildren="Email On" unCheckedChildren="Email Off" />{" "}
-                <span style={{ marginLeft: 8 }}>Email Notifications</span>
-              </Form.Item>
-
-              <Form.Item
-                name="sms_notifications"
-                valuePropName="checked"
-                style={{ marginBottom: 0 }}
-              >
-                <Switch checkedChildren="SMS On" unCheckedChildren="SMS Off" />{" "}
-                <span style={{ marginLeft: 8 }}>SMS Notifications</span>
-              </Form.Item>
+            <Form.Item
+              label="Email Notifications"
+              name="email_notifications"
+              valuePropName="checked"
+            >
+              <Switch checkedChildren="Email On" unCheckedChildren="Email Off" />
             </Form.Item>
+
+            <Form.Item
+              label="SMS Notifications"
+              name="sms_notifications"
+              valuePropName="checked"
+            >
+              <Switch checkedChildren="SMS On" unCheckedChildren="SMS Off" />
+            </Form.Item>
+
+
 
             <div style={{ textAlign: "right" }}>
               <Button type="primary" htmlType="submit" loading={saving}>
