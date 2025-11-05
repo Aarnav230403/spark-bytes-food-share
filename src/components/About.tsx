@@ -9,8 +9,8 @@ const About = () => {
             Our Mission
           </h2>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Spark Bytes connects the BU community by reducing food waste and creating meaningful connections. 
-            We believe every leftover meal is an opportunity to bring students together while promoting sustainability on campus.
+            Spark Bytes is a BU student-built platform that reduces food waste and builds community by connecting students with leftover meals on campus. 
+            Dining halls, clubs, and student organizations can instantly post when they have extra food after events — and nearby students get real-time alerts to swing by, grab a free bite, and make new connections.
           </p>
           
           <div className="grid md:grid-cols-3 gap-8 mt-12">
@@ -19,7 +19,7 @@ const About = () => {
                 <Leaf className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">Sustainability</h3>
-              <p className="text-muted-foreground">Reducing food waste one meal at a time</p>
+              <p className="text-muted-foreground">Fight food waste on campus, one meal at a time</p>
             </div>
             
             <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
@@ -27,7 +27,7 @@ const About = () => {
                 <Users className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">Community</h3>
-              <p className="text-muted-foreground">Bringing students together through food</p>
+              <p className="text-muted-foreground">Bring students together through spontaneous shared meals</p>
             </div>
             
             <div className="flex flex-col items-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
@@ -35,7 +35,7 @@ const About = () => {
                 <Heart className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">Impact</h3>
-              <p className="text-muted-foreground">Making every event count for everyone</p>
+              <p className="text-muted-foreground">Create a more connected and inclusive BU experience</p>
             </div>
           </div>
         </div>

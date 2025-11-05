@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-food-sharing.jpg";
+// Image served from project root; Vite serves it at "/Dining Hall.jpg"
 
 const Hero = () => {
   return (
@@ -13,10 +13,10 @@ const Hero = () => {
           {/* Text Content */}
           <div className="text-center lg:text-left animate-fade-in">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-              Turning leftovers into moments that matter
+              Reduce food waste. Build community. Enjoy free food.
             </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Connect with dining halls, cafés, and campus clubs. Get notified when there's free food after events.
+              Built by BU students, Spark Bytes connects dining halls, clubs, and orgs with nearby students when there are leftover meals after events. Get real-time alerts, swing by, and turn extra food into meaningful moments.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -44,7 +44,7 @@ const Hero = () => {
           <div className="relative animate-scale-in">
             <div className="relative rounded-3xl overflow-hidden shadow-card-lg">
               <img 
-                src={heroImage} 
+                src="/Dining Hall.jpg" 
                 alt="Students sharing food on campus" 
                 className="w-full h-auto object-cover"
               />

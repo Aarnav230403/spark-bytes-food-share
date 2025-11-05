@@ -5,19 +5,19 @@ const steps = [
   {
     icon: Upload,
     title: "Post Leftovers",
-    description: "Clubs and dining halls post when they have extra food after events",
+    description: "Dining halls, clubs, and orgs instantly post extra food after events",
     color: "bg-primary",
   },
   {
     icon: Bell,
     title: "Get Alerts",
-    description: "Students receive instant notifications about free food near them",
+    description: "Nearby students receive real-time notifications to swing by",
     color: "bg-secondary",
   },
   {
     icon: Utensils,
     title: "Enjoy Free Food",
-    description: "Show up, connect with others, and enjoy delicious meals",
+    description: "Grab a bite, meet new people, and reduce waste together",
     color: "bg-primary-light",
   },
 ];
@@ -31,7 +31,7 @@ const HowItWorks = () => {
             How It Works
           </h2>
           <p className="text-xl text-muted-foreground">
-            Three simple steps to join the movement
+            Post leftovers → get alerts → enjoy free food
           </p>
         </div>
 

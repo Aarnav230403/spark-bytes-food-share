@@ -14,14 +14,14 @@ const ImpactStats = () => {
         <div className="text-center mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-6 py-3 mb-6 backdrop-blur-sm">
             <TrendingUp className="h-5 w-5" />
-            <span className="font-semibold">Growing Impact</span>
+            <span className="font-semibold">Real Impact at BU</span>
           </div>
           
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Making a Real Difference
+            Turning leftovers into meaningful moments
           </h2>
           <p className="text-xl text-white/90 max-w-2xl mx-auto">
-            Join hundreds of BU students in creating a more sustainable and connected campus
+            Join BU students reducing waste and building a more connected, inclusive campus
           </p>
         </div>
 

@@ -3,10 +3,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sparkles } from "lucide-react";
 
 const teamMembers = [
-  { name: "Alex Chen", role: "Lead Developer", initials: "AC" },
-  { name: "Sarah Martinez", role: "UX Designer", initials: "SM" },
-  { name: "Jordan Lee", role: "Backend Engineer", initials: "JL" },
-  { name: "Maya Patel", role: "Product Manager", initials: "MP" },
+  { name: "Aarnav Prakash", role: "Product Lead", initials: "AP" },
+  { name: "Angelie Darbouze", role: "Front End Engineer and UX/UI Designer", initials: "AD" },
+  { name: "Gina Carpenter", role: "Front End Engineering and UX/UI Designer", initials: "GC" },
+  { name: "Yicheng Wang", role: "Backend Engineer", initials: "YW" },
+  { name: "Khaleel Nafiu", role: "Backend Engineer", initials: "KN" },
 ];
 
 const Team = () => {
@@ -27,28 +28,56 @@ const Team = () => {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-          {teamMembers.map((member, index) => (
-            <Card 
-              key={index}
-              className="p-6 text-center hover:shadow-card-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in-up border-0"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <Avatar className="w-24 h-24 mx-auto mb-4">
-                <AvatarFallback className="bg-gradient-primary text-white text-2xl font-bold">
-                  {member.initials}
-                </AvatarFallback>
-              </Avatar>
-              
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                {member.name}
-              </h3>
-              
-              <p className="text-muted-foreground">
-                {member.role}
-              </p>
-            </Card>
-          ))}
+        <div className="max-w-6xl mx-auto">
+          {/* First Row - 3 items */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+            {teamMembers.slice(0, 3).map((member, index) => (
+              <Card 
+                key={index}
+                className="p-6 text-center hover:shadow-card-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in-up border-0"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <Avatar className="w-24 h-24 mx-auto mb-4">
+                  <AvatarFallback className="bg-gradient-primary text-white text-2xl font-bold">
+                    {member.initials}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {member.name}
+                </h3>
+                
+                <p className="text-muted-foreground">
+                  {member.role}
+                </p>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Second Row - 2 items centered */}
+          <div className="flex justify-center gap-8">
+            {teamMembers.slice(3).map((member, index) => (
+              <Card 
+                key={index + 3}
+                className="p-6 text-center hover:shadow-card-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in-up border-0 w-full max-w-sm"
+                style={{ animationDelay: `${(index + 3) * 0.1}s` }}
+              >
+                <Avatar className="w-24 h-24 mx-auto mb-4">
+                  <AvatarFallback className="bg-gradient-primary text-white text-2xl font-bold">
+                    {member.initials}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {member.name}
+                </h3>
+                
+                <p className="text-muted-foreground">
+                  {member.role}
+                </p>
+              </Card>
+            ))}
+          </div>
         </div>
 
         <div className="mt-12 text-center">

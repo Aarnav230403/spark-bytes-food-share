@@ -10,7 +10,7 @@ const Footer = () => {
           <div>
             <h3 className="text-2xl font-bold mb-4">Spark Bytes</h3>
             <p className="text-white/80">
-              Turning campus leftovers into moments that matter
+              Built by BU students to reduce food waste and bring people together
             </p>
           </div>
 
