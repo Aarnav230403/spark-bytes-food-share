@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { Card, Row, Col, Spin } from "antd";
 import { supabase } from "../lib/supabaseClient";
 import Header from "../components/header";
+import EventDetail from "../components/EventDetail";
+import { set } from "date-fns";
 
 export default function HomePage() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -34,7 +38,10 @@ export default function HomePage() {
     else setEvents(data || []);
     setLoading(false);
   }
-
+  const handleEventClick = (event: any) => {
+    setSelectedEvent(event);
+    setDetailOpen(true);
+  }
   return (
     <>
       <Header />
@@ -67,9 +74,12 @@ export default function HomePage() {
                 <Card
                   title={event.title}
                   bordered
+                  hoverable
+                  onClick={() => handleEventClick(event)}
                   style={{
                     borderRadius: 12,
                     boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                    cursor: "pointer",
                   }}
                 >
                   <p>
@@ -98,6 +108,11 @@ export default function HomePage() {
           </Row>
         )}
       </main>
+      <EventDetail
+        event={selectedEvent}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </>
   );
 }
