@@ -9,7 +9,7 @@ const About = () => {
             Our Mission
           </h2>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Spark Bytes is a BU student-built platform that reduces food waste and builds community by connecting students with leftover meals on campus. 
+            TerrierTable is a BU student-built platform that reduces food waste and builds community by connecting students with leftover meals on campus. 
             Dining halls, clubs, and student organizations can instantly post when they have extra food after events — and nearby students get real-time alerts to swing by, grab a free bite, and make new connections.
           </p>
           

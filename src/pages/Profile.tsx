@@ -10,8 +10,9 @@ export default function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // need to impliment text box for phone 
-  // could impliment profile picture upload? password change from inside?
+  // need to test phone number field by getting texts sent to the user **
+  // could impliment profile picture upload? 
+  // password change from inside?
   // email fetches from supabase and cannot be changed at the moment. should it be able to be changed and then updated in the auth?
 
   useEffect(() => {

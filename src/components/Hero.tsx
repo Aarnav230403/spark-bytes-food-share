@@ -16,7 +16,7 @@ const Hero = () => {
               Reduce food waste. Build community. Enjoy free food.
             </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Built by BU students, Spark Bytes connects dining halls, clubs, and orgs with nearby students when there are leftover meals after events. Get real-time alerts, swing by, and turn extra food into meaningful moments.
+              Built by BU students, TerrierTable connects dining halls, clubs, and orgs with nearby students when there are leftover meals after events. Get real-time alerts, swing by, and turn extra food into meaningful moments.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
