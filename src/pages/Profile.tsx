@@ -10,12 +10,9 @@ export default function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // need to impliment saved choice for phone number and email notification preference
-  // need to impliment text box for phone
-  // need to impliment name change saving
+  // need to impliment text box for phone 
   // could impliment profile picture upload? password change from inside?
   // email fetches from supabase and cannot be changed at the moment. should it be able to be changed and then updated in the auth?
-
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -43,6 +40,7 @@ export default function ProfilePage() {
 
         const { error: insertError } = await supabase.from("profiles").insert({
           id: user.id,
+          phone_number: "",
           full_name: "",
           email_notifications: false,
           sms_notifications: false,
@@ -61,6 +59,7 @@ export default function ProfilePage() {
 
       form.setFieldsValue({
         full_name: profile?.full_name || "",
+        phone_number: profile?.phone_number || "",
         email_notifications: profile?.email_notifications ?? false,
         sms_notifications: profile?.sms_notifications ?? false,
       });
@@ -85,6 +84,7 @@ export default function ProfilePage() {
       .from("profiles")
       .update({
         full_name: values.full_name,
+        phone_number: values.phone_number,
         email_notifications: values.email_notifications,
         sms_notifications: values.sms_notifications,
       })
@@ -143,6 +143,7 @@ export default function ProfilePage() {
             onFinish={handleSave}
             initialValues={{
               full_name: "Jane Doe",
+              phone_number: "999-999-9999",
               email_notifications: true,
               sms_notifications: false,
             }}
@@ -158,6 +159,13 @@ export default function ProfilePage() {
             >
               <Input placeholder="Your name" />
             </Form.Item>
+
+            <Form.Item
+             label="Phone Number"
+              name="phone_number"
+              >
+              <Input placeholder="+1 (999) 999-9999" />
+              </Form.Item>
 
             <Form.Item
               label="Email Notifications"
