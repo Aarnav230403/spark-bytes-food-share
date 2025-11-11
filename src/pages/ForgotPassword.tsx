@@ -35,7 +35,7 @@ const ForgotPassword = () => {
         <div className="min-h-screen bg-background flex flex-col">
             <header className="p-6">
                 <Link to="/" className="text-2xl font-bold text-primary hover:text-primary-dark transition-colors">
-                    Spark Bytes
+                    TerrierTable
                 </Link>
             </header>
 

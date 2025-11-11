@@ -88,7 +88,7 @@ const Auth = () => {
       {/* Header */}
       <header className="p-6">
         <Link to="/" className="text-2xl font-bold text-primary hover:text-primary-dark transition-colors">
-          Spark Bytes
+          TerrierTable
         </Link>
       </header>
 
@@ -102,7 +102,7 @@ const Auth = () => {
             <CardDescription className="text-center">
               {isLogin
                 ? "Sign in to manage your event reservations"
-                : "Join SparkBytes to discover and manage campus events"}
+                : "Join TerrierTable to discover and manage campus events"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
