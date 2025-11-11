@@ -148,7 +148,7 @@ export default function ProfilePage() {
               sms_notifications: false,
             }}
           >
-            <Form.Item label="Email (read-only)">
+            <Form.Item label="Email:">
               <Input value={email || "No email found"} readOnly />
             </Form.Item>
 
@@ -163,7 +163,8 @@ export default function ProfilePage() {
             <Form.Item
              label="Phone Number"
               name="phone_number"
-              >
+              rules={[{ required: true, message: "Please enter your phone number" }]}
+            >
               <Input placeholder="+1 (999) 999-9999" />
               </Form.Item>
 
