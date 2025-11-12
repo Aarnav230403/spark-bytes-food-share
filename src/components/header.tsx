@@ -10,7 +10,7 @@ export default function Header() {
 
   const menuItems = [
     { key: "events", label: "Events", onClick: () => navigate("/homepage") },
-    { key: "reservations", label: "My Reservations" }, // add reservation page redirection once done
+    { key: "reservations", label: "My Reservations", onClick: () => navigate("/myreservations") }, 
     { key: "profile", label: "Profile", onClick: () => navigate("/profile") },
   ];
 
@@ -20,7 +20,7 @@ export default function Header() {
       top: 0,
       zIndex: 100,
       width: "100%",
-      backgroundColor: "#ffffffce",
+      backgroundColor: "#ffffff",
       borderBottom: "1px solid #f0f0f0",
     },
     inner: {
@@ -77,11 +77,11 @@ export default function Header() {
         <Menu mode="horizontal" items={menuItems} style={styles.menu} />
         <Button
           type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setOpen(true)}
-            style={styles.button}
-          >
-            Create Event
+          icon={<PlusOutlined />}
+          onClick={() => setOpen(true)}
+          style={styles.button}
+        >
+          Create Event
         </Button>
       </div>
     </header><CreateEventModal open={open} onClose={() => setOpen(false)} />

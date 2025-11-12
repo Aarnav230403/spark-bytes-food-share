@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import HomePage from "./pages/EventsHome";
 import CreateEventModal from "./pages/CreateEvent";
 import ProfilePage from "./pages/Profile";
+import MyReservations from "./pages/MyReservations";
 
 const queryClient = new QueryClient();
 
@@ -25,8 +26,9 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/update-password" element={<UpdatePassword />} />
-          <Route path="/homepage" element={<HomePage/>} />
-          <Route path="/profile" element={<ProfilePage/>} />
+          <Route path="/homepage" element={<HomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path='/myreservations' element={<MyReservations />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
