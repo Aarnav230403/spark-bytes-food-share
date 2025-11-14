@@ -1,5 +1,6 @@
-import { Modal, Card, Tag } from "antd";
+import { Modal, Card, Tag, Button, message } from "antd";
 import { MapPin, Clock, Utensils, Info } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
 
 interface EventDetailProps {
     event: any;
@@ -9,6 +10,42 @@ interface EventDetailProps {
 
 export default function EventDetail({ event, open, onOpenChange }: EventDetailProps) {
     if (!event) return null;
+
+    // ⭐ Reserve Food Function
+    async function reserveFood(eventId: number, foodIndex: number) {
+        const { data: eventData, error: fetchError } = await supabase
+            .from("events")
+            .select("food_items")
+            .eq("id", eventId)
+            .single();
+
+        if (fetchError) {
+            console.error(fetchError);
+            message.error("Failed to fetch event data");
+            return;
+        }
+
+        const foodItems = eventData.food_items;
+
+        if (foodItems[foodIndex].qty <= 0) {
+            message.warning("This item is already sold out");
+            return;
+        }
+
+        foodItems[foodIndex].qty -= 1;
+        const { error: updateError } = await supabase
+            .from("events")
+            .update({ food_items: foodItems })
+            .eq("id", eventId);
+
+        if (updateError) {
+            console.error(updateError);
+            message.error("Failed to reserve item");
+            return;
+        }
+
+        message.success("Reserved successfully!");
+    }
 
     return (
         <Modal
@@ -65,9 +102,25 @@ export default function EventDetail({ event, open, onOpenChange }: EventDetailPr
                     {event.food_items?.length > 0 ? (
                         <div style={{ marginTop: 12 }}>
                             {event.food_items.map((food: any, index: number) => (
-                                <Card key={index} size="small" style={{ marginBottom: 8 }}>
-                                    <strong>{food.name}</strong>
-                                    <span style={{ marginLeft: 12 }}>Qty: {food.qty}</span>
+                                <Card key={index} size="small" style={{ marginBottom: 12 }}>
+                                    <div style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center"
+                                    }}>
+                                        <div>
+                                            <strong>{food.name}</strong>
+                                            <span style={{ marginLeft: 12 }}>Qty: {food.qty}</span>
+                                        </div>
+
+                                        <Button
+                                            type="primary"
+                                            disabled={food.qty === 0}
+                                            onClick={() => reserveFood(event.id, index)}
+                                        >
+                                            {food.qty === 0 ? "Sold Out" : "Reserve"}
+                                        </Button>
+                                    </div>
                                 </Card>
                             ))}
                         </div>
