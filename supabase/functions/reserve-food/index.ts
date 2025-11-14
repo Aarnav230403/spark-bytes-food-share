@@ -1,62 +1,78 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-declare const Deno: any;
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   try {
-    const { event_id, food_name, user_id } = await req.json();
+    const url = new URL(req.url);
+    const auth = req.headers.get("Authorization");
 
-    if (!event_id || !food_name || !user_id) {
-      return new Response("Missing fields", { status: 400 });
+    if (!auth) {
+      return new Response("Missing auth header", { status: 401 });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRole);
+    const token = auth.replace("Bearer ", "");
 
-    // 1) Load event
-    const { data: event, error: loadErr } = await supabase
-      .from("events")
-      .select("food_items")
-      .eq("id", event_id)
-      .single();
+    const { eventId, foodIndex } = await req.json();
 
-    if (loadErr || !event) {
+    if (eventId === undefined || foodIndex === undefined) {
+      return new Response("Missing eventId or foodIndex", { status: 400 });
+    }
+
+    // 1. Get current event data
+    const { data: event, error: fetchErr } = await fetch(
+      `${url.origin}/rest/v1/events?id=eq.${eventId}`,
+      {
+        headers: {
+          apikey: token,
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    ).then((r) => r.json());
+
+    if (!event || event.length === 0) {
       return new Response("Event not found", { status: 404 });
     }
 
-    const items = event.food_items;
-    const updatedItems = [...items];
+    const e = event[0];
+    const foodItems = e.food_items;
 
-    // 2) Update qty
-    const idx = updatedItems.findIndex((i) => i.name === food_name);
-    if (idx === -1) return new Response("Food not found", { status: 404 });
-
-    if (updatedItems[idx].qty <= 0)
-      return new Response("No more food available", { status: 400 });
-
-    updatedItems[idx].qty -= 1;
-
-    // 3) Update DB
-    const { error: updateErr } = await supabase
-      .from("events")
-      .update({ food_items: updatedItems })
-      .eq("id", event_id);
-
-    if (updateErr) {
-      return new Response(updateErr.message, { status: 500 });
+    if (!foodItems[foodIndex] || foodItems[foodIndex].qty <= 0) {
+      return new Response("Food item unavailable", { status: 400 });
     }
 
-    // 4) Insert reservation
-    await supabase.from("reservations").insert({
-      event_id,
-      user_id,
-      food_name,
-      reserved_at: new Date().toISOString(),
+    // 2. Decrease quantity
+    foodItems[foodIndex].qty -= 1;
+
+    // 3. Update event record
+    await fetch(`${url.origin}/rest/v1/events?id=eq.${eventId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: token,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ food_items: foodItems }),
+    });
+
+    // 4. Insert reservation record
+    await fetch(`${url.origin}/rest/v1/my_reservations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: token,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: e.user_id || null,
+        event_id: eventId,
+        food_name: foodItems[foodIndex].name,
+        food_index: foodIndex,
+        qty: 1,
+      }),
     });
 
     return new Response("Reserved successfully", { status: 200 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return new Response(message, { status: 500 });
+    console.error("Error:", err);
+    return new Response("Internal server error", { status: 500 });
   }
 });
