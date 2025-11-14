@@ -16,7 +16,7 @@ export default function CreateEventModal({
   const [foodName, setFoodName] = useState("");
   const [foodQty, setFoodQty] = useState(1);
 
-  const dietary = ["Vegan", "Gluten Free", "Vegetarian", "Halal", "Kosher"];
+  const dietary = ["Vegan", "Gluten Free", "Vegetarian", "Halal", "Kosher", "Nut Free", "Shellfish"];
   const campuses = ["West", "Central", "East", "South", "Fenway", "Medical"];
 
   const addFood = () => {
