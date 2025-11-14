@@ -1,11 +1,4 @@
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Modal, Card, Tag } from "antd";
 import { MapPin, Clock, Utensils, Info } from "lucide-react";
 
 interface EventDetailProps {
@@ -14,119 +7,88 @@ interface EventDetailProps {
     onOpenChange: (open: boolean) => void;
 }
 
-export default function EventDetail({
-    event,
-    open,
-    onOpenChange,
-}: EventDetailProps) {
+export default function EventDetail({ event, open, onOpenChange }: EventDetailProps) {
     if (!event) return null;
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">{event.title}</DialogTitle>
-                </DialogHeader>
+        <Modal
+            open={open}
+            onCancel={() => onOpenChange(false)}
+            footer={null}
+            title={event.title}
+            width={700}
+        >
+            <div style={{ padding: 12 }}>
+                {/* Location */}
+                <div style={{ marginBottom: 16 }}>
+                    <strong><MapPin size={16} /> Location:</strong>
+                    <p>{event.location}</p>
+                </div>
 
-                <div className="space-y-6 mt-4">
-                    {/* Location & Time */}
-                    <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                            <div>
-                                <p className="font-semibold">Location</p>
-                                <p className="text-muted-foreground">{event.location}</p>
-                            </div>
-                        </div>
+                {/* Time */}
+                <div style={{ marginBottom: 16 }}>
+                    <strong><Clock size={16} /> Pickup Time:</strong>
+                    <p>{event.start_time} - {event.end_time}</p>
+                </div>
 
-                        <div className="flex items-start gap-3">
-                            <Clock className="h-5 w-5 text-primary mt-0.5" />
-                            <div>
-                                <p className="font-semibold">Pickup Time</p>
-                                <p className="text-muted-foreground">
-                                    {event.start_time} - {event.end_time}
-                                </p>
-                            </div>
+                {/* Campus */}
+                {event.campus?.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                        <strong>Campus:</strong>
+                        <div style={{ marginTop: 6 }}>
+                            {event.campus.map((c: string, i: number) => (
+                                <Tag key={i} color="blue">{c}</Tag>
+                            ))}
                         </div>
                     </div>
+                )}
 
-                    {/* Campus & Dietary Info */}
-                    <div className="space-y-3">
-                        {event.campus && event.campus.length > 0 && (
-                            <div>
-                                <p className="font-semibold mb-2">Campus Location</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {event.campus.map((campus: string, index: number) => (
-                                        <Badge key={index} variant="secondary">
-                                            {campus}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                {/* Dietary */}
+                {event.dietary?.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                        <strong>Dietary:</strong>
+                        <div style={{ marginTop: 6 }}>
+                            {event.dietary.map((d: string, i: number) => (
+                                <Tag key={i}>{d}</Tag>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                        {event.dietary && event.dietary.length > 0 && (
-                            <div>
-                                <p className="font-semibold mb-2">Dietary Information</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {event.dietary.map((diet: string, index: number) => (
-                                        <Badge key={index} variant="outline">
-                                            {diet}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                {/* Food Items */}
+                <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Utensils size={16} />
+                        <strong>Available Food</strong>
                     </div>
 
-                    {/* Food Items */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <Utensils className="h-5 w-5 text-primary" />
-                            <p className="font-semibold text-lg">Available Food</p>
+                    {event.food_items?.length > 0 ? (
+                        <div style={{ marginTop: 12 }}>
+                            {event.food_items.map((food: any, index: number) => (
+                                <Card key={index} size="small" style={{ marginBottom: 8 }}>
+                                    <strong>{food.name}</strong>
+                                    <span style={{ marginLeft: 12 }}>Qty: {food.qty}</span>
+                                </Card>
+                            ))}
                         </div>
-
-                        {event.food_items && event.food_items.length > 0 ? (
-                            <div className="grid gap-3">
-                                {event.food_items.map((food: any, index: number) => (
-                                    <Card key={index} className="p-4">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-semibold text-lg">{food.name}</p>
-                                                {food.description && (
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        {food.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <Badge className="ml-2">{food.qty}</Badge>
-                                        </div>
-                                    </Card>
-                                ))}
-                            </div>
-                        ) : (
-                            <Card className="p-4">
-                                <p className="text-muted-foreground text-center">
-                                    No food items listed
-                                </p>
-                            </Card>
-                        )}
-                    </div>
-
-                    {/* Additional Notes */}
-                    {event.notes && (
-                        <div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <Info className="h-5 w-5 text-primary" />
-                                <p className="font-semibold">Additional Notes</p>
-                            </div>
-                            <Card className="p-4">
-                                <p className="text-muted-foreground">{event.notes}</p>
-                            </Card>
-                        </div>
+                    ) : (
+                        <p>No food items</p>
                     )}
                 </div>
-            </DialogContent>
-        </Dialog>
+
+                {/* Notes */}
+                {event.notes && (
+                    <div style={{ marginTop: 20 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <Info size={16} />
+                            <strong>Additional Notes</strong>
+                        </div>
+                        <Card style={{ marginTop: 8 }}>
+                            {event.notes}
+                        </Card>
+                    </div>
+                )}
+            </div>
+        </Modal>
     );
 }
