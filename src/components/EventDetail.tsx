@@ -11,7 +11,7 @@ interface EventDetailProps {
 export default function EventDetail({ event, open, onOpenChange }: EventDetailProps) {
     if (!event) return null;
 
-    // ⭐ Reserve Food via SQL RPC
+    // Reserve Food via SQL RPC
     async function reserveFood(eventId: number, foodIndex: number) {
         // 1. Ensure user is logged in
         const { data: userData } = await supabase.auth.getUser();
@@ -39,7 +39,7 @@ export default function EventDetail({ event, open, onOpenChange }: EventDetailPr
         // 4. SQL function returns:
         // "ok", "sold_out", "event_not_found", "invalid_index"
         if (data === "ok") {
-            message.success("Reserved successfully!");
+            message.success("Reserved successfully!",0.8);
 
             // Small optimistic update (update UI only)
             event.food_items[foodIndex].qty -= 1;

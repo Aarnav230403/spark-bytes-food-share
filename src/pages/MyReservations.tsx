@@ -68,7 +68,7 @@ export default function MyReservations() {
       return;
     }
 
-    message.success("Reservation cancelled");
+    message.success("Reservation cancelled",0.8);
 
     // Refresh reservations + events
     fetchReservations();
