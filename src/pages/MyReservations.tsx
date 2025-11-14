@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, Spin } from "antd";
+import { Card, Spin, Button, message } from "antd";
 import Header from "../components/header";
 import { supabase } from "../lib/supabaseClient";
 
@@ -28,7 +28,7 @@ export default function MyReservations() {
 
     // Fetch reservation rows
     const { data: reservations, error } = await supabase
-      .from("my_reservation") // ← FIXED
+      .from("my_reservation")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
@@ -56,9 +56,27 @@ export default function MyReservations() {
     setLoading(false);
   }
 
+  // Cancel Reservation
+  async function cancelReservation(id: number) {
+    const { error } = await supabase.rpc("cancel_reservation", {
+      reservation_id: id,
+    });
+
+    if (error) {
+      console.error(error);
+      message.error("Failed to cancel reservation");
+      return;
+    }
+
+    message.success("Reservation cancelled");
+
+    // Refresh reservations + events
+    fetchReservations();
+  }
+
   // Find event by id
   function getEvent(event_id: string | number) {
-    return events.find((e) => e.id == event_id); // ← FIXED (==)
+    return events.find((e) => e.id == event_id);
   }
 
   return (
@@ -96,10 +114,18 @@ export default function MyReservations() {
 
                 <p>
                   <strong>Reserved Qty: </strong>
-                  {r.qty}  {/* ← FIXED */}
+                  {r.qty}
                 </p>
 
-                <p style={{ fontSize: 12, color: "#999" }}>
+                <Button
+                  danger
+                  style={{ marginTop: 12 }}
+                  onClick={() => cancelReservation(r.id)}
+                >
+                  Cancel Reservation
+                </Button>
+
+                <p style={{ fontSize: 12, color: "#999", marginTop: 12 }}>
                   Reserved at: {new Date(r.created_at).toLocaleString()}
                 </p>
               </Card>
