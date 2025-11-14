@@ -1,46 +1,112 @@
 import { useEffect, useState } from "react";
+import { Card, Spin } from "antd";
 import Header from "../components/header";
 import { supabase } from "../lib/supabaseClient";
 
 export default function MyReservations() {
-  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    const load = async () => {
-      const user = await supabase.auth.getUser();
-      if (!user.data.user) return;
-
-      const { data: reservations } = await supabase
-        .from("reservations")
-        .select("*, events(title)")
-        .eq("user_id", user.data.user.id);
-
-      setData(reservations || []);
-    };
-
-    load();
+    fetchReservations();
   }, []);
+
+  // Fetch reservations of current user
+  async function fetchReservations() {
+    setLoading(true);
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch reservation rows
+    const { data: reservations, error } = await supabase
+      .from("my_reservation") // ← FIXED
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading reservations:", error);
+      setLoading(false);
+      return;
+    }
+
+    setItems(reservations || []);
+
+    // Fetch associated events
+    const eventIds = [...new Set(reservations.map((r) => r.event_id))];
+
+    if (eventIds.length > 0) {
+      const { data: eventsData } = await supabase
+        .from("events")
+        .select("*")
+        .in("id", eventIds);
+
+      setEvents(eventsData || []);
+    }
+
+    setLoading(false);
+  }
+
+  // Find event by id
+  function getEvent(event_id: string | number) {
+    return events.find((e) => e.id == event_id); // ← FIXED (==)
+  }
 
   return (
     <>
       <Header />
-      <div className="p-6 max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">My Reservations</h1>
+      <main style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 28, marginBottom: 20 }}>My Reservations</h1>
 
-        {data.length === 0 ? (
-          <p>You have no reservations.</p>
+        {loading ? (
+          <Spin size="large" />
+        ) : items.length === 0 ? (
+          <p style={{ color: "#777" }}>You have no reservations yet.</p>
         ) : (
-          data.map((r: any) => (
-            <div key={r.id} className="border p-4 rounded mb-3">
-              <p className="font-semibold">{r.events.title}</p>
-              <p>{r.food_name}</p>
-              <p className="text-sm text-gray-400">
-                Reserved at {new Date(r.reserved_at).toLocaleString()}
-              </p>
-            </div>
-          ))
+          items.map((r) => {
+            const event = getEvent(r.event_id);
+
+            return (
+              <Card key={r.id} style={{ marginBottom: 16 }}>
+                <h3>{event?.title || "Event Deleted"}</h3>
+
+                <p>
+                  <strong>Location: </strong>
+                  {event?.location || "Unknown"}
+                </p>
+
+                <p>
+                  <strong>Pickup Time: </strong>
+                  {event?.start_time || "?"} – {event?.end_time || "?"}
+                </p>
+
+                <p>
+                  <strong>Food Item: </strong>
+                  {r.food_name}
+                </p>
+
+                <p>
+                  <strong>Reserved Qty: </strong>
+                  {r.qty}  {/* ← FIXED */}
+                </p>
+
+                <p style={{ fontSize: 12, color: "#999" }}>
+                  Reserved at: {new Date(r.created_at).toLocaleString()}
+                </p>
+              </Card>
+            );
+          })
         )}
-      </div>
+      </main>
     </>
   );
 }

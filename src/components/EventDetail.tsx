@@ -11,40 +11,43 @@ interface EventDetailProps {
 export default function EventDetail({ event, open, onOpenChange }: EventDetailProps) {
     if (!event) return null;
 
-    // ⭐ Reserve Food Function
+    // ⭐ Reserve Food via SQL RPC
     async function reserveFood(eventId: number, foodIndex: number) {
-        const { data: eventData, error: fetchError } = await supabase
-            .from("events")
-            .select("food_items")
-            .eq("id", eventId)
-            .single();
+        // 1. Ensure user is logged in
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData?.user;
 
-        if (fetchError) {
-            console.error(fetchError);
-            message.error("Failed to fetch event data");
+        if (!user) {
+            message.error("Please log in first");
             return;
         }
 
-        const foodItems = eventData.food_items;
+        // 2. Call RPC function
+        const { data, error } = await supabase.rpc("reserve_food", {
+            event_id: eventId,
+            food_index: foodIndex,
+            user_id: user.id, // TEXT
+        });
 
-        if (foodItems[foodIndex].qty <= 0) {
-            message.warning("This item is already sold out");
+        // 3. Error display
+        if (error) {
+            console.error("RPC Error:", error);
+            message.error(error.message || "Reservation failed");
             return;
         }
 
-        foodItems[foodIndex].qty -= 1;
-        const { error: updateError } = await supabase
-            .from("events")
-            .update({ food_items: foodItems })
-            .eq("id", eventId);
+        // 4. SQL function returns:
+        // "ok", "sold_out", "event_not_found", "invalid_index"
+        if (data === "ok") {
+            message.success("Reserved successfully!");
 
-        if (updateError) {
-            console.error(updateError);
-            message.error("Failed to reserve item");
-            return;
+            // Small optimistic update (update UI only)
+            event.food_items[foodIndex].qty -= 1;
+        } else if (data === "sold_out") {
+            message.warning("This item is already sold out.");
+        } else {
+            message.error(data);
         }
-
-        message.success("Reserved successfully!");
     }
 
     return (
