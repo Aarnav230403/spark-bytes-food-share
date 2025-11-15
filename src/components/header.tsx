@@ -9,7 +9,9 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   const menuItems = [
+    { key: "home", label: "Home", onClick: () => navigate("/") },
     { key: "events", label: "Events", onClick: () => navigate("/homepage") },
+    { key: "clubs", label: "Clubs", onClick: () => navigate("/clubs") },
     { key: "reservations", label: "My Reservations", onClick: () => navigate("/myreservations") }, 
     { key: "profile", label: "Profile", onClick: () => navigate("/profile") },
   ];

@@ -12,6 +12,8 @@ import HomePage from "./pages/EventsHome";
 import CreateEventModal from "./pages/CreateEvent";
 import ProfilePage from "./pages/Profile";
 import MyReservations from "./pages/MyReservations";
+import ClubsDirectory from "./pages/clubs/index";
+import ClubDetail from "./pages/clubs/ClubDetail";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/homepage" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path='/myreservations' element={<MyReservations />} />
+          <Route path="/clubs" element={<ClubsDirectory />} />
+          <Route path="/clubs/:id" element={<ClubDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
