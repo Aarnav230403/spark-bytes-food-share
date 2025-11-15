@@ -87,7 +87,7 @@ const mockEvents: Event[] = [
 // Helper function to convert mock event format to EventDetail expected format
 function convertEventForDetail(event: Event) {
   const [startTime, endTime] = event.pickupWindow.split(" – ");
-  
+
   // Parse food items - expects format like "Pizza (120), chips, sodas"
   const foodItems = event.food.split(", ").map((item) => {
     const match = item.match(/^(.+?)\s*\((\d+)\)$/);
@@ -99,8 +99,8 @@ function convertEventForDetail(event: Event) {
   });
 
   // Parse dietary restrictions
-  const dietaryArray = event.dietary === "None specified" 
-    ? [] 
+  const dietaryArray = event.dietary === "None specified"
+    ? []
     : event.dietary.split(", ").map(d => d.trim());
 
   return {
@@ -138,13 +138,13 @@ export default function HomePage() {
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesCampus = selectedCampus === "all" || event.campus === selectedCampus;
-      
+
       const matchesDietary =
         selectedDietary === "all" ||
         event.dietary.toLowerCase().includes(selectedDietary.toLowerCase());
-      
+
       return matchesSearch && matchesCampus && matchesDietary;
     });
   }, [searchQuery, selectedCampus, selectedDietary]);
@@ -172,10 +172,10 @@ export default function HomePage() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Welcome to TerrierTable
+                All Events
               </h1>
               <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-                Discover available events and connect with free food across campus. 
+                Discover available events and connect with free food across campus.
                 Browse, filter, and reserve your spot today.
               </p>
               <div className="flex items-center justify-center gap-6 text-white/80">
@@ -200,7 +200,7 @@ export default function HomePage() {
                 <Filter className="h-5 w-5" />
                 <span className="font-medium">Filters</span>
               </div>
-              
+
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 {/* Search */}
                 <div className="relative">
