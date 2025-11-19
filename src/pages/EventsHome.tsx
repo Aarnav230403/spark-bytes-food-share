@@ -1,9 +1,15 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock, MapPin, Users, Calendar, Filter, X } from "lucide-react";
-import { Link } from "react-router-dom";
 import Header from "../components/header";
 import EventDetail from "../components/EventDetail";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,145 +20,105 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "../lib/supabaseClient";
 
-type Event = {
+type DbEvent = {
   id: number;
   title: string;
   location: string;
-  pickupWindow: string;
-  campus: string;
-  dietary: string;
-  food: string;
-  date: string;
-  spotsLeft: number;
-  host: string;
-  description: string;
+  date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  campus: string | string[] | null;
+  dietary: string | string[] | null;
+  food_items: { name: string; qty: number }[] | null;
+  created_by: string | null;
 };
 
-const mockEvents: Event[] = [
-  {
-    id: 1,
-    title: "Midnight Munchies @ CDS",
-    location: "CDS",
-    pickupWindow: "10:00 PM – 11:30 PM",
-    campus: "Central Campus",
-    dietary: "Gluten Free, Vegetarian options",
-    food: "Pasta bar, salad bowls, cookies",
-    date: "Fri, Nov 21",
-    spotsLeft: 18,
-    host: "BU Dining",
-    description: "Late night study fuel — grab a warm meal before your grind at Mugar.",
-  },
-  {
-    id: 2,
-    title: "CS Study Night Snacks",
-    location: "HTC",
-    pickupWindow: "6:00 PM – 7:30 PM",
-    campus: "West Campus",
-    dietary: "None specified",
-    food: "Pizza (120), chips, sodas",
-    date: "Thu, Nov 20",
-    spotsLeft: 42,
-    host: "CS Ambassadors",
-    description: "Drop in, grab a slice, and work on your psets with other CS students.",
-  },
-  {
-    id: 3,
-    title: "Book Club Coffee & Pastries",
-    location: "GSU Backcourt",
-    pickupWindow: "9:00 AM – 10:30 AM",
-    campus: "Central Campus",
-    dietary: "Vegan options",
-    food: "Croissants, muffins, drip coffee, tea",
-    date: "Sat, Nov 22",
-    spotsLeft: 9,
-    host: "BU Book Club",
-    description: "Casual morning meetup with light breakfast and conversation.",
-  },
-  {
-    id: 4,
-    title: "Club Sports Post-Game Bites",
-    location: "Nickerson Field Gate C",
-    pickupWindow: "4:30 PM – 5:15 PM",
-    campus: "West Campus",
-    dietary: "Gluten Free, Dairy Free options",
-    food: "Wraps, fruit cups, Gatorade",
-    date: "Sun, Nov 23",
-    spotsLeft: 25,
-    host: "Club Sports Council",
-    description: "Refuel after your game with quick grab-and-go snacks.",
-  },
-];
-
-// Helper function to convert mock event format to EventDetail expected format
-function convertEventForDetail(event: Event) {
-  const [startTime, endTime] = event.pickupWindow.split(" – ");
-
-  // Parse food items - expects format like "Pizza (120), chips, sodas"
-  const foodItems = event.food.split(", ").map((item) => {
-    const match = item.match(/^(.+?)\s*\((\d+)\)$/);
-    if (match) {
-      return { name: match[1].trim(), qty: parseInt(match[2]) };
-    }
-    // Default quantity of 10 if not specified
-    return { name: item.trim(), qty: 10 };
-  });
-
-  // Parse dietary restrictions
-  const dietaryArray = event.dietary === "None specified"
-    ? []
-    : event.dietary.split(", ").map(d => d.trim());
-
-  return {
-    id: event.id,
-    title: event.title,
-    location: event.location,
-    start_time: startTime || "",
-    end_time: endTime || "",
-    campus: [event.campus],
-    dietary: dietaryArray,
-    food_items: foodItems,
-    notes: event.description,
-  };
-}
+type DetailEvent = {
+  id: number;
+  title: string;
+  location: string;
+  start_time: string;
+  end_time: string;
+  campus: string[];
+  dietary: string[];
+  food_items: { name: string; qty: number }[];
+  notes?: string;
+};
 
 export default function HomePage() {
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [events, setEvents] = useState<DbEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<DetailEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCampus, setSelectedCampus] = useState<string>("all");
   const [selectedDietary, setSelectedDietary] = useState<string>("all");
 
-  const campuses = ["all", "Central Campus", "West Campus", "East Campus", "South Campus"];
+  const campuses = [
+    "all",
+    "Central Campus",
+    "West Campus",
+    "East Campus",
+    "South Campus",
+    "Fenway Campus",
+    "Medical Campus",
+  ];
   const dietaryOptions = [
     "all",
     "Gluten Free",
     "Vegetarian",
     "Vegan",
     "Dairy Free",
+    "Halal",
   ];
 
-  const filteredEvents = useMemo(() => {
-    return mockEvents.filter((event) => {
-      const matchesSearch =
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    async function fetchEvents() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: true });
 
-      const matchesCampus = selectedCampus === "all" || event.campus === selectedCampus;
+      if (error) {
+        console.error("Error loading events:", error);
+      } else {
+        setEvents((data || []) as DbEvent[]);
+      }
+      setLoading(false);
+    }
+
+    fetchEvents();
+  }, []);
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const title = event.title?.toLowerCase() || "";
+      const location = event.location?.toLowerCase() || "";
+      const campusStr = Array.isArray(event.campus)
+        ? event.campus.join(", ")
+        : event.campus || "";
+      const dietaryStr = Array.isArray(event.dietary)
+        ? event.dietary.join(", ")
+        : event.dietary || "";
+
+      const matchesSearch =
+        title.includes(searchQuery.toLowerCase()) ||
+        location.includes(searchQuery.toLowerCase());
+
+      const matchesCampus =
+        selectedCampus === "all" ||
+        campusStr.toLowerCase().includes(selectedCampus.toLowerCase());
 
       const matchesDietary =
         selectedDietary === "all" ||
-        event.dietary.toLowerCase().includes(selectedDietary.toLowerCase());
+        dietaryStr.toLowerCase().includes(selectedDietary.toLowerCase());
 
       return matchesSearch && matchesCampus && matchesDietary;
     });
-  }, [searchQuery, selectedCampus, selectedDietary]);
-
-  const handleEventClick = (event: Event) => {
-    setSelectedEvent(convertEventForDetail(event));
-    setDetailOpen(true);
-  };
+  }, [events, searchQuery, selectedCampus, selectedDietary]);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -160,13 +126,55 @@ export default function HomePage() {
     setSelectedDietary("all");
   };
 
-  const hasActiveFilters = searchQuery || selectedCampus !== "all" || selectedDietary !== "all";
+  const hasActiveFilters =
+    !!searchQuery || selectedCampus !== "all" || selectedDietary !== "all";
+  function convertEventForDetail(event: DbEvent): DetailEvent {
+    const campusArray = Array.isArray(event.campus)
+      ? event.campus
+      : typeof event.campus === "string"
+      ? event.campus
+          .replace(/[{}"]/g, "")
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean)
+      : [];
 
+    const dietaryArray = Array.isArray(event.dietary)
+      ? event.dietary
+      : typeof event.dietary === "string"
+      ? event.dietary
+          .replace(/[{}"]/g, "")
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean)
+      : [];
+
+    return {
+      id: event.id,
+      title: event.title,
+      location: event.location,
+      start_time: event.start_time || "",
+      end_time: event.end_time || "",
+      campus: campusArray,
+      dietary: dietaryArray,
+      food_items: event.food_items || [],
+      notes: "",
+    };
+  }
+
+  const handleEventClick = (event: DbEvent) => {
+    try {
+      const detailEvent = convertEventForDetail(event);
+      setSelectedEvent(detailEvent);
+      setDetailOpen(true);
+    } catch (err) {
+      console.error("Error opening event:", err);
+    }
+  };
   return (
     <>
       <Header />
       <main className="min-h-screen bg-background">
-        {/* Hero Section */}
         <section className="relative bg-gradient-hero text-white py-20 lg:py-28">
           <div className="absolute inset-0 bg-foreground/5"></div>
           <div className="container mx-auto px-4 relative z-10">
@@ -175,24 +183,24 @@ export default function HomePage() {
                 All Events
               </h1>
               <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-                Discover available events and connect with free food across campus.
-                Browse, filter, and reserve your spot today.
+                Discover available events and connect with free food across
+                campus. Browse, filter, and reserve your spot today.
               </p>
               <div className="flex items-center justify-center gap-6 text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  <span>{mockEvents.length} Events Available</span>
+                  <span>
+                    {loading
+                      ? "Loading events..."
+                      : `${filteredEvents.length} Events Available`}
+                  </span>
                 </div>
-                <Link to="/clubs" className="flex items-center gap-2 hover:text-white transition-colors">
-                  <Users className="h-5 w-5" />
-                  <span>Join the Community</span>
-                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Filters Section */}
+        {/* 筛选区 */}
         <section className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b shadow-sm">
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -202,18 +210,16 @@ export default function HomePage() {
               </div>
 
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-                {/* Search */}
-                <div className="relative">
-                  <Input
-                    placeholder="Search events..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
+                <Input
+                  placeholder="Search events..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
 
-                {/* Campus Filter */}
-                <Select value={selectedCampus} onValueChange={setSelectedCampus}>
+                <Select
+                  value={selectedCampus}
+                  onValueChange={setSelectedCampus}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="All Campuses" />
                   </SelectTrigger>
@@ -226,8 +232,10 @@ export default function HomePage() {
                   </SelectContent>
                 </Select>
 
-                {/* Dietary Filter */}
-                <Select value={selectedDietary} onValueChange={setSelectedDietary}>
+                <Select
+                  value={selectedDietary}
+                  onValueChange={setSelectedDietary}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="All Dietary" />
                   </SelectTrigger>
@@ -241,7 +249,6 @@ export default function HomePage() {
                 </Select>
               </div>
 
-              {/* Clear Filters */}
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
@@ -254,51 +261,16 @@ export default function HomePage() {
                 </Button>
               )}
             </div>
-
-            {/* Active Filter Badges */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {searchQuery && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Search: {searchQuery}
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
-                {selectedCampus !== "all" && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Campus: {selectedCampus}
-                    <button
-                      onClick={() => setSelectedCampus("all")}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
-                {selectedDietary !== "all" && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Dietary: {selectedDietary}
-                    <button
-                      onClick={() => setSelectedDietary("all")}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
-              </div>
-            )}
           </div>
         </section>
 
-        {/* Events Grid */}
+        {/* Event Cards */}
         <section className="container mx-auto px-4 py-12">
-          {filteredEvents.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20 text-muted-foreground">
+              Loading events...
+            </div>
+          ) : filteredEvents.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-xl text-muted-foreground mb-4">
                 No events match your filters.
@@ -311,11 +283,9 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              <div className="mb-6">
-                <p className="text-muted-foreground">
-                  Showing {filteredEvents.length} of {mockEvents.length} events
-                </p>
-              </div>
+              <p className="text-muted-foreground mb-6">
+                Showing {filteredEvents.length} of {events.length} events
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredEvents.map((event) => (
                   <Card
@@ -329,11 +299,13 @@ export default function HomePage() {
                           {event.title}
                         </CardTitle>
                         <Badge variant="outline" className="shrink-0">
-                          {event.spotsLeft} spots
+                          {event.date || "TBA"}
                         </Badge>
                       </div>
-                      <CardDescription className="line-clamp-2 mt-2">
-                        {event.description}
+                      <CardDescription className="mt-2">
+                        {Array.isArray(event.campus)
+                          ? event.campus.join(", ")
+                          : event.campus}
                       </CardDescription>
                     </CardHeader>
 
@@ -345,37 +317,38 @@ export default function HomePage() {
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4 shrink-0" />
-                        <span>{event.pickupWindow}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4 shrink-0" />
-                        <span>{event.date}</span>
+                        <span>
+                          {event.start_time} – {event.end_time}
+                        </span>
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 pt-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {event.campus}
-                        </Badge>
-                        {event.dietary !== "None specified" && (
-                          <Badge variant="outline" className="text-xs">
-                            {event.dietary.split(",")[0].trim()}
-                            {event.dietary.includes(",") && "..."}
+                        {event.campus && (
+                          <Badge variant="secondary" className="text-xs">
+                            {Array.isArray(event.campus)
+                              ? event.campus[0]
+                              : typeof event.campus === "string"
+                              ? event.campus.replace(/[{}"]/g, "").split(",")[0]
+                              : ""}
                           </Badge>
                         )}
-                      </div>
-
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          <span className="font-medium">Food:</span> {event.food}
-                        </p>
+                        {event.dietary && (
+                          <Badge variant="outline" className="text-xs">
+                            {Array.isArray(event.dietary)
+                              ? event.dietary[0]
+                              : typeof event.dietary === "string"
+                              ? event.dietary.replace(/[{}"]/g, "").split(",")[0]
+                              : ""}
+                          </Badge>
+                        )}
                       </div>
                     </CardContent>
 
                     <CardFooter className="pt-3">
                       <div className="w-full">
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                          <span>Hosted by {event.host}</span>
+                          <span>Tap to view details & reserve</span>
+                          <Users className="h-4 w-4" />
                         </div>
                         <Button className="w-full" variant="default">
                           View Details
