@@ -203,7 +203,7 @@ export default function ProfilePage() {
                 {campuses.map((campus) => (
                   <Select.Option key={campus} value={campus}>
                     {campus === "all"
-                      ? "No preference (All campuses)"
+                      ? "All campuses"
                       : campus}
                   </Select.Option>
                 ))}
