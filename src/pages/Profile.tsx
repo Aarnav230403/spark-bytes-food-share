@@ -1,7 +1,28 @@
 import { useEffect, useState } from "react";
-import { Card, Form, Input, Switch, Button, message, Spin } from "antd";
+import { Card, Form, Input, Switch, Button, message, Spin, Select } from "antd";
 import { supabase } from "../lib/supabaseClient";
 import Header from "../components/header";
+
+const campuses = [
+  "all",
+  "Central Campus",
+  "West Campus",
+  "East Campus",
+  "South Campus",
+  "Fenway Campus",
+  "Medical Campus",
+];
+
+const dietaryOptions = [
+  "all",
+  "Vegan",
+  "Gluten Free",
+  "Vegetarian",
+  "Halal",
+  "Kosher",
+  "Nut Free",
+  "Shellfish",
+];
 
 export default function ProfilePage() {
   const [form] = Form.useForm();
@@ -63,6 +84,8 @@ export default function ProfilePage() {
         phone_number: profile?.phone_number || "",
         email_notifications: profile?.email_notifications ?? false,
         sms_notifications: profile?.sms_notifications ?? false,
+        campus_preference: profile?.campus_preference || "all",
+        dietary_preferences: profile?.dietary_preferences || [],
       });
 
       setLoading(false);
@@ -88,6 +111,8 @@ export default function ProfilePage() {
         phone_number: values.phone_number,
         email_notifications: values.email_notifications,
         sms_notifications: values.sms_notifications,
+        campus_preference: values.campus_preference,
+        dietary_preferences: values.dietary_preferences,
       })
       .eq("id", userId);
 
@@ -169,6 +194,36 @@ export default function ProfilePage() {
               <Input placeholder="+1 (999) 999-9999" />
               </Form.Item>
 
+              <Form.Item
+              label="Preferred Campus Location"
+              name="campus_preference"
+              rules={[{ required: true, message: "Please select a campus" }]}
+            >
+              <Select placeholder="Select campus preference">
+                {campuses.map((campus) => (
+                  <Select.Option key={campus} value={campus}>
+                    {campus === "all"
+                      ? "No preference (All campuses)"
+                      : campus}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="Dietary Preferences" name="dietary_preferences">
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="Select dietary preferences"
+              >
+                {dietaryOptions.map((diet) => (
+                  <Select.Option key={diet} value={diet}>
+                    {diet === "all" ? "No preference" : diet}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
             <Form.Item
               label="Email Notifications"
               name="email_notifications"
@@ -188,7 +243,11 @@ export default function ProfilePage() {
 
 
             <div style={{ textAlign: "right" }}>
-              <Button type="primary" htmlType="submit" loading={saving}>
+              <Button type="primary" htmlType="submit" loading={saving} 
+              style={{
+              backgroundColor: "#CC0000",
+              borderColor: "#CC0000",
+              }}>
                 Save Changes
               </Button>
             </div>

@@ -67,11 +67,13 @@ export default function HomePage() {
   ];
   const dietaryOptions = [
     "all",
+    "Vegan",
     "Gluten Free",
     "Vegetarian",
-    "Vegan",
-    "Dairy Free",
     "Halal",
+    "Kosher",
+    "Nut Free",
+    "Shellfish",
   ];
 
   useEffect(() => {
