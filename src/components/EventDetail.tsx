@@ -1,7 +1,8 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "../lib/supabaseClient";
-import { message } from "antd";
+import { message, Modal, InputNumber } from "antd";
+import { useState } from "react";
 
 type FoodItem = {
   name: string;
@@ -29,6 +30,8 @@ export default function EventDetail({
   open,
   onOpenChange,
 }: EventDetailProps) {
+  const [selectedQty, setSelectedQty] = useState<number>(1);
+
   if (!event) return <></>;
 
   async function reserveFood(eventId: number, foodIndex: number) {
@@ -42,26 +45,48 @@ export default function EventDetail({
       return;
     }
 
-    const { data, error } = await supabase.rpc("reserve_food", {
-      event_id: eventId,
-      food_index: foodIndex,
-      user_id: user.id,
+    const food = event.food_items[foodIndex];
+    let qty = 1;
+
+    Modal.confirm({
+      title: `Reserve ${food.name}`,
+      content: (
+        <div>
+          <p>Enter quantity you want to reserve:</p>
+          <InputNumber
+            min={1}
+            max={food.qty}
+            defaultValue={1}
+            onChange={(value) => (qty = value || 1)}
+          />
+        </div>
+      ),
+      okText: "Confirm",
+      cancelText: "Cancel",
+      onOk: async () => {
+        const { data, error } = await supabase.rpc("reserve_food", {
+          event_id: eventId,
+          food_index: foodIndex,
+          user_id: user.id,
+          qty: qty,
+        });
+
+        if (error) {
+          console.error("RPC Error:", error);
+          message.error(error.message || "Reservation failed");
+          return;
+        }
+
+        if (data === "ok") {
+          message.success(`Reserved ${qty} ${food.name}(s) successfully!`);
+          event.food_items[foodIndex].qty -= qty;
+        } else if (data === "Food unavailable") {
+          message.warning("This item is sold out.");
+        } else {
+          message.error(data);
+        }
+      },
     });
-
-    if (error) {
-      console.error("RPC Error:", error);
-      message.error(error.message || "Reservation failed");
-      return;
-    }
-
-    if (data === "ok") {
-      message.success("Reserved successfully!");
-      event.food_items[foodIndex].qty -= 1;
-    } else if (data === "Food unavailable") {
-      message.warning("This item is sold out.");
-    } else {
-      message.error(data);
-    }
   }
 
   return (

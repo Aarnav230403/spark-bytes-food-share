@@ -72,8 +72,6 @@ export default function CreateEventModal({
     }
 
     try {
-      // ✅ PostgreSQL 数组字段需要传 '{item1,item2}' 格式
-      // 我们自动转换 Checkbox 选中的数组
       const dietaryArray = values.dietary || [];
       const campusArray = values.campus || [];
 
@@ -84,7 +82,6 @@ export default function CreateEventModal({
         start_time: values.start?.format("h:mm A"),
         end_time: values.end?.format("h:mm A"),
 
-        // ✅ 修复点：转成 PostgreSQL array literal 格式
         dietary: `{${dietaryArray.join(",")}}`,
         campus: `{${campusArray.join(",")}}`,
 
