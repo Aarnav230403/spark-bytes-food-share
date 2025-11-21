@@ -1,7 +1,31 @@
-import { useEffect, useState } from "react";
-import { Card, Form, Input, Switch, Button, message, Spin } from "antd";
+import { useEffect, useState, useRef } from "react";
+import { Card, Form, Input, Switch, Button, message, Spin, Select } from "antd";
+
 import { supabase } from "../lib/supabaseClient";
 import Header from "../components/header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload } from "lucide-react";
+
+const campuses = [
+  "all",
+  "Central Campus",
+  "West Campus",
+  "East Campus",
+  "South Campus",
+  "Fenway Campus",
+  "Medical Campus",
+];
+
+const dietaryOptions = [
+  "all",
+  "Vegan",
+  "Gluten Free",
+  "Vegetarian",
+  "Halal",
+  "Kosher",
+  "Nut Free",
+  "Shellfish",
+];
 
 export default function ProfilePage() {
   const [form] = Form.useForm();
@@ -265,7 +289,37 @@ export default function ProfilePage() {
               rules={[{ required: true, message: "Please enter your phone number" }]}
             >
               <Input placeholder="+1 (999) 999-9999" />
-              </Form.Item>
+            </Form.Item>
+
+            <Form.Item
+              label="Preferred Campus Location"
+              name="campus_preference"
+              rules={[{ required: true, message: "Please select a campus" }]}
+            >
+              <Select placeholder="Select campus preference">
+                {campuses.map((campus) => (
+                  <Select.Option key={campus} value={campus}>
+                    {campus === "all"
+                      ? "All campuses"
+                      : campus}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="Dietary Preferences" name="dietary_preferences">
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="Select dietary preferences"
+              >
+                {dietaryOptions.map((diet) => (
+                  <Select.Option key={diet} value={diet}>
+                    {diet === "all" ? "No preference" : diet}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
 
             <Form.Item
               label="Email Notifications"
@@ -286,11 +340,11 @@ export default function ProfilePage() {
 
 
             <div style={{ textAlign: "right" }}>
-              <Button type="primary" htmlType="submit" loading={saving} 
-              style={{
-              backgroundColor: "#CC0000",
-              borderColor: "#CC0000",
-              }}>
+              <Button type="primary" htmlType="submit" loading={saving}
+                style={{
+                  backgroundColor: "#CC0000",
+                  borderColor: "#CC0000",
+                }}>
                 Save Changes
               </Button>
             </div>
