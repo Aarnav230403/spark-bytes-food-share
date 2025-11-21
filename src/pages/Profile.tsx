@@ -1,9 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Card, Form, Input, Switch, Button, message, Spin } from "antd";
 import { supabase } from "../lib/supabaseClient";
 import Header from "../components/header";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Upload } from "lucide-react";
 
 export default function ProfilePage() {
   const [form] = Form.useForm();
@@ -68,6 +66,8 @@ export default function ProfilePage() {
         phone_number: profile?.phone_number || "",
         email_notifications: profile?.email_notifications ?? false,
         sms_notifications: profile?.sms_notifications ?? false,
+        campus_preference: profile?.campus_preference || "all",
+        dietary_preferences: profile?.dietary_preferences || [],
       });
 
       setAvatarUrl(profile?.avatar_url || null)
@@ -155,6 +155,8 @@ export default function ProfilePage() {
         phone_number: values.phone_number,
         email_notifications: values.email_notifications,
         sms_notifications: values.sms_notifications,
+        campus_preference: values.campus_preference,
+        dietary_preferences: values.dietary_preferences,
       })
       .eq("id", userId);
 
@@ -263,7 +265,7 @@ export default function ProfilePage() {
               rules={[{ required: true, message: "Please enter your phone number" }]}
             >
               <Input placeholder="+1 (999) 999-9999" />
-            </Form.Item>
+              </Form.Item>
 
             <Form.Item
               label="Email Notifications"
@@ -284,7 +286,11 @@ export default function ProfilePage() {
 
 
             <div style={{ textAlign: "right" }}>
-              <Button type="primary" htmlType="submit" loading={saving}>
+              <Button type="primary" htmlType="submit" loading={saving} 
+              style={{
+              backgroundColor: "#CC0000",
+              borderColor: "#CC0000",
+              }}>
                 Save Changes
               </Button>
             </div>

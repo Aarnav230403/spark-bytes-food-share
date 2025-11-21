@@ -148,7 +148,9 @@ describe("EventDetail", () => {
       user_id: "user-123",
     });
 
-    expect(mockedMessage.success).toHaveBeenCalledWith("Reserved successfully!");
+    expect(mockedMessage.success).toHaveBeenCalledWith(
+      "Reserved successfully!",
+      expect.any(Number));
   });
 
   test("shows warning when item is sold out from RPC response", async () => {

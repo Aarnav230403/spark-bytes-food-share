@@ -42,22 +42,28 @@ export default function MyReservations() {
     setItems(reservations || []);
 
     // Fetch associated events
-    const eventIds = [...new Set(reservations.map((r) => r.event_id))];
+    const eventIds = [...new Set((reservations || []).map((r) => r.event_id))];
 
     if (eventIds.length > 0) {
-      const { data: eventsData } = await supabase
+      const { data: eventsData, error: eventsError } = await supabase
         .from("events")
         .select("*")
         .in("id", eventIds);
 
-      setEvents(eventsData || []);
+      if (eventsError) {
+        console.error("Error loading events:", eventsError);
+      } else {
+        setEvents(eventsData || []);
+      }
+    } else {
+      setEvents([]);
     }
 
     setLoading(false);
   }
 
   // Cancel Reservation
-  async function cancelReservation(id: number) {
+  async function cancelReservation(id: string) {
     const { error } = await supabase.rpc("cancel_reservation", {
       reservation_id: id,
     });
@@ -68,7 +74,7 @@ export default function MyReservations() {
       return;
     }
 
-    message.success("Reservation cancelled",0.8);
+    message.success("Reservation cancelled", 0.8);
 
     // Refresh reservations + events
     fetchReservations();

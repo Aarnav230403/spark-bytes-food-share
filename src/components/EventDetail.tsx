@@ -1,150 +1,139 @@
-import { Modal, Card, Tag, Button, message } from "antd";
-import { MapPin, Clock, Utensils, Info } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { supabase } from "../lib/supabaseClient";
+import { message, Modal, InputNumber } from "antd";
+import { useState } from "react";
 
-interface EventDetailProps {
-    event: any;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
+type FoodItem = {
+  name: string;
+  qty: number;
+};
 
-export default function EventDetail({ event, open, onOpenChange }: EventDetailProps) {
-    if (!event) return null;
+type EventDetailProps = {
+  event: {
+    id: number;
+    title: string;
+    location: string;
+    start_time: string;
+    end_time: string;
+    campus: string[];
+    dietary: string[];
+    food_items: FoodItem[];
+    notes?: string;
+  } | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-    // Reserve Food via SQL RPC
-    async function reserveFood(eventId: number, foodIndex: number) {
-        // 1. Ensure user is logged in
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData?.user;
+export default function EventDetail({
+  event,
+  open,
+  onOpenChange,
+}: EventDetailProps) {
+  const [selectedQty, setSelectedQty] = useState<number>(1);
 
-        if (!user) {
-            message.error("Please log in first");
-            return;
-        }
+  if (!event) return <></>;
 
-        // 2. Call RPC function
-        const { data, error } = await supabase.rpc("reserve_food", {
-            event_id: eventId,
-            food_index: foodIndex,
-            user_id: user.id, // TEXT
-        });
+  async function reserveFood(eventId: number, foodIndex: number) {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-        // 3. Error display
-        if (error) {
-            console.error("RPC Error:", error);
-            message.error(error.message || "Reservation failed");
-            return;
-        }
-
-        // 4. SQL function returns:
-        // "ok", "sold_out", "event_not_found", "invalid_index"
-        if (data === "ok") {
-            message.success("Reserved successfully!",0.8);
-
-            // Small optimistic update (update UI only)
-            event.food_items[foodIndex].qty -= 1;
-        } else if (data === "sold_out") {
-            message.warning("This item is already sold out.");
-        } else {
-            message.error(data);
-        }
+    if (authError || !user) {
+      message.error("Please log in first");
+      return;
     }
 
-    return (
-        <Modal
-            open={open}
-            onCancel={() => onOpenChange(false)}
-            footer={null}
-            title={event.title}
-            width={700}
-        >
-            <div style={{ padding: 12 }}>
-                {/* Location */}
-                <div style={{ marginBottom: 16 }}>
-                    <strong><MapPin size={16} /> Location:</strong>
-                    <p>{event.location}</p>
+    const food = event.food_items[foodIndex];
+    let qty = 1;
+
+    Modal.confirm({
+      title: `Reserve ${food.name}`,
+      content: (
+        <div>
+          <p>Enter quantity you want to reserve:</p>
+          <InputNumber
+            min={1}
+            max={food.qty}
+            defaultValue={1}
+            onChange={(value) => (qty = value || 1)}
+          />
+        </div>
+      ),
+      okText: "Confirm",
+      cancelText: "Cancel",
+      onOk: async () => {
+        const { data, error } = await supabase.rpc("reserve_food", {
+          event_id: eventId,
+          food_index: foodIndex,
+          user_id: user.id,
+          qty: qty,
+        });
+
+        if (error) {
+          console.error("RPC Error:", error);
+          message.error(error.message || "Reservation failed");
+          return;
+        }
+
+        if (data === "ok") {
+          message.success(`Reserved ${qty} ${food.name}(s) successfully!`);
+          event.food_items[foodIndex].qty -= qty;
+        } else if (data === "Food unavailable") {
+          message.warning("This item is sold out.");
+        } else {
+          message.error(data);
+        }
+      },
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold mb-2">{event.title}</h2>
+        <p className="text-sm text-muted-foreground mb-2">
+          {event.location} · {event.start_time} – {event.end_time}
+        </p>
+
+        {!!event.campus?.length && (
+          <p className="text-sm text-muted-foreground mb-2">
+            Campus: {event.campus.join(", ")}
+          </p>
+        )}
+        {!!event.dietary?.length && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Dietary: {event.dietary.join(", ")}
+          </p>
+        )}
+        {event.notes && (
+          <p className="text-sm text-muted-foreground mb-4">{event.notes}</p>
+        )}
+
+        <div className="space-y-3 mt-4">
+          {event.food_items?.map((food, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between border rounded-lg px-3 py-2"
+            >
+              <div>
+                <div className="font-medium">{food.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  Remaining: {food.qty}
                 </div>
-
-                {/* Time */}
-                <div style={{ marginBottom: 16 }}>
-                    <strong><Clock size={16} /> Pickup Time:</strong>
-                    <p>{event.start_time} - {event.end_time}</p>
-                </div>
-
-                {/* Campus */}
-                {event.campus?.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
-                        <strong>Campus:</strong>
-                        <div style={{ marginTop: 6 }}>
-                            {event.campus.map((c: string, i: number) => (
-                                <Tag key={i} color="blue">{c}</Tag>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Dietary */}
-                {event.dietary?.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
-                        <strong>Dietary:</strong>
-                        <div style={{ marginTop: 6 }}>
-                            {event.dietary.map((d: string, i: number) => (
-                                <Tag key={i}>{d}</Tag>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Food Items */}
-                <div style={{ marginBottom: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Utensils size={16} />
-                        <strong>Available Food</strong>
-                    </div>
-
-                    {event.food_items?.length > 0 ? (
-                        <div style={{ marginTop: 12 }}>
-                            {event.food_items.map((food: any, index: number) => (
-                                <Card key={index} size="small" style={{ marginBottom: 12 }}>
-                                    <div style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center"
-                                    }}>
-                                        <div>
-                                            <strong>{food.name}</strong>
-                                            <span style={{ marginLeft: 12 }}>Qty: {food.qty}</span>
-                                        </div>
-
-                                        <Button
-                                            type="primary"
-                                            disabled={food.qty === 0}
-                                            onClick={() => reserveFood(event.id, index)}
-                                        >
-                                            {food.qty === 0 ? "Sold Out" : "Reserve"}
-                                        </Button>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <p>No food items</p>
-                    )}
-                </div>
-
-                {/* Notes */}
-                {event.notes && (
-                    <div style={{ marginTop: 20 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <Info size={16} />
-                            <strong>Additional Notes</strong>
-                        </div>
-                        <Card style={{ marginTop: 8 }}>
-                            {event.notes}
-                        </Card>
-                    </div>
-                )}
+              </div>
+              <Button
+                size="sm"
+                disabled={food.qty <= 0}
+                onClick={() => reserveFood(event.id, idx)}
+              >
+                {food.qty > 0 ? "Reserve" : "Sold out"}
+              </Button>
             </div>
-        </Modal>
-    );
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

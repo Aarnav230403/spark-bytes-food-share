@@ -1,61 +1,125 @@
 "use client";
 import { useState } from "react";
-import { Modal, Form, Input, Button, Checkbox, List, message, TimePicker, DatePicker } from "antd";
+import {
+  Modal,
+  Form,
+  Input,
+  Button,
+  Checkbox,
+  List,
+  message,
+  TimePicker,
+  DatePicker,
+} from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { supabase } from "../lib/supabaseClient";
+
+type CreateEventModalProps = {
+  open: boolean;
+  onClose: () => void;
+  onCreated?: () => void;
+};
 
 export default function CreateEventModal({
   open,
   onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+  onCreated,
+}: CreateEventModalProps) {
   const [form] = Form.useForm();
-  const [foodItems, setFoodItems] = useState<{ id: string; name: string; qty: number }[]>([]);
+  const [foodItems, setFoodItems] = useState<
+    { id: string; name: string; qty: number }[]
+  >([]);
   const [foodName, setFoodName] = useState("");
   const [foodQty, setFoodQty] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
 
-  const dietary = ["Vegan", "Gluten Free", "Vegetarian", "Halal", "Kosher", "Nut Free", "Shellfish"];
+  const dietary = [
+    "Vegan",
+    "Gluten Free",
+    "Vegetarian",
+    "Halal",
+    "Kosher",
+    "Nut Free",
+    "Shellfish",
+  ];
   const campuses = ["West", "Central", "East", "South", "Fenway", "Medical"];
 
   const addFood = () => {
     if (!foodName.trim()) return;
-    setFoodItems([...foodItems, { id: Date.now().toString(), name: foodName, qty: foodQty }]);
+    setFoodItems((prev) => [
+      ...prev,
+      { id: Date.now().toString(), name: foodName.trim(), qty: foodQty },
+    ]);
     setFoodName("");
     setFoodQty(1);
   };
 
-  const removeFood = (id: string) => setFoodItems(foodItems.filter((f) => f.id !== id));
+  const removeFood = (id: string) =>
+    setFoodItems((prev) => prev.filter((f) => f.id !== id));
 
   const handleSubmit = async (values: any) => {
-    const newEvent = {
-      title: values.title,
-      location: values.location,
-      date: values.date.format("YYYY-MM-DD"),
-      start_time: values.start.format("h:mm A"),
-      end_time: values.end.format("h:mm A"),
-      dietary: values.dietary || [],
-      campus: values.campus || [],
-      food_items: foodItems,
-      created_at: new Date(),
-    };
+    setSubmitting(true);
 
-    const { error } = await supabase.from("events").insert([newEvent]);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error("Supabase insert error:", error);
-      message.error("Error creating event");
-    } else {
-      message.success("Event created!");
-      form.resetFields();
-      setFoodItems([]);
-      onClose();
+    if (authError || !user) {
+      setSubmitting(false);
+      message.error("Please log in first");
+      return;
+    }
+
+    try {
+      const dietaryArray = values.dietary || [];
+      const campusArray = values.campus || [];
+
+      const newEvent = {
+        title: values.title,
+        location: values.location,
+        date: values.date?.format("YYYY-MM-DD"),
+        start_time: values.start?.format("h:mm A"),
+        end_time: values.end?.format("h:mm A"),
+
+        dietary: `{${dietaryArray.join(",")}}`,
+        campus: `{${campusArray.join(",")}}`,
+
+        food_items: foodItems.map((f) => ({
+          name: f.name,
+          qty: f.qty,
+        })),
+        created_at: new Date().toISOString(),
+        created_by: user.id,
+      };
+
+      const { error } = await supabase.from("events").insert([newEvent]);
+
+      if (error) {
+        console.error("Supabase insert error:", error);
+        message.error(`Error creating event: ${error.message}`);
+      } else {
+        message.success("Event created!");
+        form.resetFields();
+        setFoodItems([]);
+        onClose();
+        onCreated?.();
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} title="Create Event" centered width={600}>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      title="Create Event"
+      centered
+      width={600}
+      destroyOnClose
+    >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item
           label="Event Title"
@@ -72,6 +136,7 @@ export default function CreateEventModal({
         >
           <Input />
         </Form.Item>
+
         <Form.Item
           label="Event Date"
           name="date"
@@ -101,7 +166,9 @@ export default function CreateEventModal({
                   const start = getFieldValue("start");
                   if (!start || !value) return Promise.resolve();
                   if (value.isAfter(start)) return Promise.resolve();
-                  return Promise.reject(new Error("End time must be after start time"));
+                  return Promise.reject(
+                    new Error("End time must be after start time")
+                  );
                 },
               }),
             ]}
@@ -123,7 +190,6 @@ export default function CreateEventModal({
           <div style={{ display: "flex", gap: 8 }}>
             <Form.Item label="Item" style={{ marginBottom: 0, flex: 1 }}>
               <Input
-                id="foodName"
                 placeholder="Food name"
                 value={foodName}
                 onChange={(e) => setFoodName(e.target.value)}
@@ -133,16 +199,17 @@ export default function CreateEventModal({
 
             <Form.Item label="Qty" style={{ marginBottom: 0 }}>
               <Input
-                id="foodQty"
                 type="number"
                 min={1}
                 value={foodQty}
-                onChange={(e) => setFoodQty(parseInt(e.target.value) || 1)}
+                onChange={(e) =>
+                  setFoodQty(parseInt(e.target.value || "1", 10) || 1)
+                }
                 style={{ width: 70 }}
               />
             </Form.Item>
 
-            <Button icon={<PlusOutlined />} onClick={addFood} aria-label="Add food" />
+            <Button icon={<PlusOutlined />} onClick={addFood} />
           </div>
           <List
             dataSource={foodItems}
@@ -154,7 +221,6 @@ export default function CreateEventModal({
                     danger
                     onClick={() => removeFood(f.id)}
                     key="remove"
-                    aria-label={`Remove ${f.name}`}
                   >
                     remove
                   </Button>,
@@ -172,7 +238,7 @@ export default function CreateEventModal({
           <Button onClick={onClose} style={{ marginRight: 8 }}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" loading={submitting}>
             Create Event
           </Button>
         </div>
