@@ -2,6 +2,12 @@
 
 A Vite + React TypeScript app that helps Boston University communities discover leftover-food events, reserve servings, and reduce campus food waste. It ships with a marketing/landing experience, authenticated flows for students, and club-oriented tools for publishing and managing events through Supabase.
 
+## Details & Links: 
+- CS391 Team 6
+- Notion: https://www.notion.so/Spark-Bytes-Team-6-TerrierTable-28c258ab6cea80559b33fbf2fa5ff65c 
+- Drive: https://drive.google.com/drive/folders/1j9pvN46R6alTIiWxKrbMJL_Cc0Lp4IW0?usp=sharing
+
+
 ## Features
 
 - **Landing funnel**: Hero, how-it-works, impact stats, and team sections in `src/components` for public outreach.
