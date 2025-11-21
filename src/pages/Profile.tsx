@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, Form, Input, Switch, Button, message, Spin } from "antd";
 import { supabase } from "../lib/supabaseClient";
 import Header from "../components/header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload } from "lucide-react";
 
 export default function ProfilePage() {
   const [form] = Form.useForm();
@@ -9,6 +11,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // need to test phone number field by getting texts sent to the user **
   // could impliment profile picture upload? 
@@ -65,12 +70,74 @@ export default function ProfilePage() {
         sms_notifications: profile?.sms_notifications ?? false,
       });
 
+      setAvatarUrl(profile?.avatar_url || null)
       setLoading(false);
     };
 
     fetchProfile();
   }, [form]);
 
+  // added this whole function
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !userId) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      message.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error('Image must be smaller than 5MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/avatar.${fileExt}`;
+
+      // Delete old avatar if exists
+      if (avatarUrl) {
+        const oldPath = avatarUrl.split('/').pop();
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([`${userId}/${oldPath}`]);
+        }
+      }
+
+      // Upload new avatar
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      message.success('Profile picture updated!');
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      message.error('Failed to upload profile picture');
+    } finally {
+      setUploading(false);
+    }
+  };
+  // up to here
   const handleSave = async (values: any) => {
 
 
@@ -138,6 +205,35 @@ export default function ProfilePage() {
             boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
           }}
         >
+          {/* jsut added this */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
+            <Avatar
+              style={{ width: 120, height: 120, cursor: 'pointer' }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <AvatarImage src={avatarUrl || undefined} alt="Profile" />
+              <AvatarFallback style={{ fontSize: 48 }}>
+                {form.getFieldValue('full_name')?.charAt(0)?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              style={{ display: 'none' }}
+            />
+            <Button
+              type="link"
+              icon={<Upload size={16} />}
+              onClick={() => fileInputRef.current?.click()}
+              loading={uploading}
+              style={{ marginTop: 8 }}
+            >
+              {uploading ? 'Uploading...' : 'Upload Photo'}
+            </Button>
+          </div>
+          {/* up to here */}
           <Form
             form={form}
             layout="vertical"
@@ -162,12 +258,12 @@ export default function ProfilePage() {
             </Form.Item>
 
             <Form.Item
-             label="Phone Number"
+              label="Phone Number"
               name="phone_number"
               rules={[{ required: true, message: "Please enter your phone number" }]}
             >
               <Input placeholder="+1 (999) 999-9999" />
-              </Form.Item>
+            </Form.Item>
 
             <Form.Item
               label="Email Notifications"
