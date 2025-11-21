@@ -12,7 +12,7 @@ const teamMembers = [
 
 const Team = () => {
   return (
-    <section className="py-20 bg-background">
+    <section id="team" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-accent rounded-full px-6 py-3 mb-6">

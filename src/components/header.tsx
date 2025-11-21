@@ -34,7 +34,6 @@ export default function Header() {
   }, []);
 
   const menuItems = [
-    { key: "home", label: "Home", onClick: () => navigate("/") },
     { key: "events", label: "Events", onClick: () => navigate("/homepage") },
     { key: "clubs", label: "Clubs", onClick: () => navigate("/clubs") },
     { key: "my-events", label: "My Events", onClick: () => navigate("/my-events") },
@@ -60,10 +59,14 @@ export default function Header() {
       margin: "0 auto",
       padding: "0 16px",
     },
-    left: {
+    logoButton: {
       display: "flex",
       alignItems: "center",
       gap: 8,
+      border: "none",
+      background: "transparent",
+      cursor: "pointer",
+      padding: 0,
     },
     logoBox: {
       width: 40,
@@ -112,10 +115,14 @@ export default function Header() {
   return (
     <><header style={styles.header}>
       <div style={styles.inner}>
-        <div style={styles.left}>
+        <button
+          type="button"
+          style={styles.logoButton}
+          onClick={() => navigate("/")}
+        >
           <div style={styles.logoBox}>TT</div>
           <h1 style={styles.logoText}>TerrierTable</h1>
-        </div>
+        </button>
         <Menu mode="horizontal" items={menuItems} style={styles.menu} />
         <div style={styles.right}>
           <Button

@@ -9,7 +9,7 @@ const stats = [
 
 const ImpactStats = () => {
   return (
-    <section className="py-20 bg-gradient-primary text-white">
+    <section id="impact" className="py-20 bg-gradient-primary text-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-6 py-3 mb-6 backdrop-blur-sm">

@@ -65,7 +65,6 @@ describe("Header", () => {
   test("renders all main menu items", () => {
     render(<Header />);
 
-    expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Events" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Clubs" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My Events" })).toBeInTheDocument();
@@ -78,19 +77,25 @@ describe("Header", () => {
   test("navigates to correct routes when menu items are clicked", async () => {
     render(<Header />);
 
-    await user.click(screen.getByRole("button", { name: "Home" }));
     await user.click(screen.getByRole("button", { name: "Events" }));
     await user.click(screen.getByRole("button", { name: "Clubs" }));
     await user.click(screen.getByRole("button", { name: "My Events" }));
     await user.click(screen.getByRole("button", { name: "My Reservations" }));
     await user.click(screen.getByRole("button", { name: "Profile" }));
 
-    expect(navigateMock).toHaveBeenCalledWith("/");
     expect(navigateMock).toHaveBeenCalledWith("/homepage");
     expect(navigateMock).toHaveBeenCalledWith("/clubs");
     expect(navigateMock).toHaveBeenCalledWith("/my-events");
     expect(navigateMock).toHaveBeenCalledWith("/myreservations");
     expect(navigateMock).toHaveBeenCalledWith("/profile");
+  });
+
+  test("navigates home when logo is clicked", async () => {
+    render(<Header />);
+
+    await user.click(screen.getByRole("button", { name: /TerrierTable/i }));
+
+    expect(navigateMock).toHaveBeenCalledWith("/");
   });
 
   test("opens CreateEvent modal when 'Create Event' button is clicked", async () => {
