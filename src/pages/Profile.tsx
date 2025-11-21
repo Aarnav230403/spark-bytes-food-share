@@ -37,11 +37,6 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // need to test phone number field by getting texts sent to the user **
-  // could impliment profile picture upload? 
-  // password change from inside?
-  // email fetches from supabase and cannot be changed at the moment. should it be able to be changed and then updated in the auth?
-
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
@@ -231,7 +226,7 @@ export default function ProfilePage() {
             boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
           }}
         >
-          {/* jsut added this */}
+          {/* just added this */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
             <Avatar
               style={{ width: 120, height: 120, cursor: 'pointer' }}

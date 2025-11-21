@@ -38,7 +38,6 @@ export default function Header() {
     { key: "clubs", label: "Clubs", onClick: () => navigate("/clubs") },
     { key: "my-events", label: "My Events", onClick: () => navigate("/my-events") },
     { key: "reservations", label: "My Reservations", onClick: () => navigate("/myreservations") },
-    { key: "profile", label: "Profile", onClick: () => navigate("/profile") },
   ];
 
   const styles = {
