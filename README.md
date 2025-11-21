@@ -98,7 +98,3 @@ src/
 2. Run `npm run lint && npm test`
 3. Open a PR detailing UI changes and any Supabase schema updates
 
----
-
-Let me know if you’d like me to tailor this README for a different audience (e.g., deployment guide, stakeholder summary).
-
