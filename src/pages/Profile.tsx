@@ -91,7 +91,7 @@ export default function ProfilePage() {
         email_notifications: profile?.email_notifications ?? false,
         sms_notifications: profile?.sms_notifications ?? false,
         campus_preference: profile?.campus_preference || "all",
-        dietary_preferences: profile?.dietary_preferences || [],
+        dietary_preference: profile?.dietary_preference || [],
       });
 
       setAvatarUrl(profile?.avatar_url || null)
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         email_notifications: values.email_notifications,
         sms_notifications: values.sms_notifications,
         campus_preference: values.campus_preference,
-        dietary_preferences: values.dietary_preferences,
+        dietary_preference: values.dietary_preference,
       })
       .eq("id", userId);
 
@@ -307,7 +307,7 @@ export default function ProfilePage() {
               </Select>
             </Form.Item>
 
-            <Form.Item label="Dietary Preferences" name="dietary_preferences">
+            <Form.Item label="Dietary Preference" name="dietary_preference">
               <Select
                 mode="multiple"
                 allowClear
