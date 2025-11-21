@@ -16,17 +16,6 @@ const campuses = [
   "Medical Campus",
 ];
 
-const dietaryOptions = [
-  "all",
-  "Vegan",
-  "Gluten Free",
-  "Vegetarian",
-  "Halal",
-  "Kosher",
-  "Nut Free",
-  "Shellfish",
-];
-
 export default function ProfilePage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
@@ -86,7 +75,6 @@ export default function ProfilePage() {
         email_notifications: profile?.email_notifications ?? false,
         sms_notifications: profile?.sms_notifications ?? false,
         campus_preference: profile?.campus_preference || "all",
-        dietary_preference: profile?.dietary_preference || [],
       });
 
       setAvatarUrl(profile?.avatar_url || null)
@@ -175,7 +163,6 @@ export default function ProfilePage() {
         email_notifications: values.email_notifications,
         sms_notifications: values.sms_notifications,
         campus_preference: values.campus_preference,
-        dietary_preference: values.dietary_preference,
       })
       .eq("id", userId);
 
@@ -297,20 +284,6 @@ export default function ProfilePage() {
                     {campus === "all"
                       ? "All campuses"
                       : campus}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item label="Dietary Preference" name="dietary_preference">
-              <Select
-                mode="multiple"
-                allowClear
-                placeholder="Select dietary preferences"
-              >
-                {dietaryOptions.map((diet) => (
-                  <Select.Option key={diet} value={diet}>
-                    {diet === "all" ? "No preference" : diet}
                   </Select.Option>
                 ))}
               </Select>
