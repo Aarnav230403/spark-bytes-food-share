@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Clock, MapPin, Users, Calendar, Filter, X } from "lucide-react";
 import Header from "../components/header";
-import EventDetail from "../components/EventDetail";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -29,8 +35,8 @@ type DbEvent = {
   date: string | null;
   start_time: string | null;
   end_time: string | null;
-  campus: string | string[] | null;
-  dietary: string | string[] | null;
+  campus: string[] | string | null;
+  dietary: string[] | string | null;
   food_items: { name: string; qty: number }[] | null;
   created_by: string | null;
 };
@@ -44,6 +50,7 @@ type DetailEvent = {
   campus: string[];
   dietary: string[];
   food_items: { name: string; qty: number }[];
+  eta?: string;
   notes?: string;
 };
 
@@ -53,8 +60,9 @@ export default function HomePage() {
   const [selectedEvent, setSelectedEvent] = useState<DetailEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCampus, setSelectedCampus] = useState<string>("all");
-  const [selectedDietary, setSelectedDietary] = useState<string>("all");
+  const [selectedCampus, setSelectedCampus] = useState("all");
+  const [selectedDietary, setSelectedDietary] = useState("all");
+  const [userCampusPreference, setUserCampusPreference] = useState("all");
 
   const campuses = [
     "all",
@@ -77,21 +85,28 @@ export default function HomePage() {
   ];
 
   useEffect(() => {
+    async function fetchUserPreference() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("campus_preference")
+        .eq("id", user.id)
+        .single();
+      if (data?.campus_preference) setUserCampusPreference(data.campus_preference);
+    }
+
     async function fetchEvents() {
       setLoading(true);
       const { data, error } = await supabase
         .from("events")
         .select("*")
         .order("date", { ascending: true });
-
-      if (error) {
-        console.error("Error loading events:", error);
-      } else {
-        setEvents((data || []) as DbEvent[]);
-      }
+      if (!error && data) setEvents(data as DbEvent[]);
       setLoading(false);
     }
 
+    fetchUserPreference();
     fetchEvents();
   }, []);
 
@@ -105,19 +120,15 @@ export default function HomePage() {
       const dietaryStr = Array.isArray(event.dietary)
         ? event.dietary.join(", ")
         : event.dietary || "";
-
       const matchesSearch =
         title.includes(searchQuery.toLowerCase()) ||
         location.includes(searchQuery.toLowerCase());
-
       const matchesCampus =
         selectedCampus === "all" ||
         campusStr.toLowerCase().includes(selectedCampus.toLowerCase());
-
       const matchesDietary =
         selectedDietary === "all" ||
         dietaryStr.toLowerCase().includes(selectedDietary.toLowerCase());
-
       return matchesSearch && matchesCampus && matchesDietary;
     });
   }, [events, searchQuery, selectedCampus, selectedDietary]);
@@ -130,26 +141,84 @@ export default function HomePage() {
 
   const hasActiveFilters =
     !!searchQuery || selectedCampus !== "all" || selectedDietary !== "all";
+
   function convertEventForDetail(event: DbEvent): DetailEvent {
     const campusArray = Array.isArray(event.campus)
-      ? event.campus
+      ? event.campus.map((c) => c.trim())
       : typeof event.campus === "string"
       ? event.campus
-          .replace(/[{}"]/g, "")
+          .replace(/[{}\[\]"']/g, "")
           .split(",")
           .map((c) => c.trim())
           .filter(Boolean)
       : [];
-
     const dietaryArray = Array.isArray(event.dietary)
-      ? event.dietary
+      ? event.dietary.map((d) => d.trim())
       : typeof event.dietary === "string"
       ? event.dietary
-          .replace(/[{}"]/g, "")
+          .replace(/[{}\[\]"']/g, "")
           .split(",")
           .map((d) => d.trim())
           .filter(Boolean)
       : [];
+    const eventCampus = campusArray[0] || "Central Campus";
+
+    const ETA_TABLE: Record<string, Record<string, string>> = {
+      "Central Campus": {
+        "Central Campus": "2 mins",
+        "West Campus": "5 mins",
+        "East Campus": "5 mins",
+        "South Campus": "6 mins",
+        "Fenway Campus": "8 mins",
+        "Medical Campus": "10 mins",
+      },
+      "West Campus": {
+        "West Campus": "2 mins",
+        "Central Campus": "5 mins",
+        "East Campus": "7 mins",
+        "South Campus": "8 mins",
+        "Fenway Campus": "9 mins",
+        "Medical Campus": "12 mins",
+      },
+      "East Campus": {
+        "East Campus": "2 mins",
+        "Central Campus": "5 mins",
+        "West Campus": "7 mins",
+        "South Campus": "6 mins",
+        "Fenway Campus": "9 mins",
+        "Medical Campus": "11 mins",
+      },
+      "South Campus": {
+        "South Campus": "2 mins",
+        "Central Campus": "6 mins",
+        "West Campus": "8 mins",
+        "East Campus": "6 mins",
+        "Fenway Campus": "9 mins",
+        "Medical Campus": "10 mins",
+      },
+      "Fenway Campus": {
+        "Fenway Campus": "2 mins",
+        "Central Campus": "8 mins",
+        "West Campus": "9 mins",
+        "East Campus": "9 mins",
+        "South Campus": "9 mins",
+        "Medical Campus": "9 mins",
+      },
+      "Medical Campus": {
+        "Medical Campus": "2 mins",
+        "Central Campus": "10 mins",
+        "West Campus": "12 mins",
+        "East Campus": "11 mins",
+        "South Campus": "10 mins",
+        "Fenway Campus": "9 mins",
+      },
+    };
+
+    const pref = userCampusPreference || "Central Campus";
+    const eta =
+      ETA_TABLE[pref]?.[eventCampus] ||
+      ETA_TABLE[eventCampus]?.[pref] ||
+      "Unavailable";
 
     return {
       id: event.id,
@@ -160,19 +229,17 @@ export default function HomePage() {
       campus: campusArray,
       dietary: dietaryArray,
       food_items: event.food_items || [],
+      eta,
       notes: "",
     };
   }
 
   const handleEventClick = (event: DbEvent) => {
-    try {
-      const detailEvent = convertEventForDetail(event);
-      setSelectedEvent(detailEvent);
-      setDetailOpen(true);
-    } catch (err) {
-      console.error("Error opening event:", err);
-    }
+    const detailEvent = convertEventForDetail(event);
+    setSelectedEvent(detailEvent);
+    setDetailOpen(true);
   };
+
   return (
     <>
       <Header />
@@ -185,8 +252,7 @@ export default function HomePage() {
                 All Events
               </h1>
               <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-                Discover available events and connect with free food across
-                campus. Browse, filter, and reserve your spot today.
+                Discover available events and connect with free food across campus.
               </p>
               <div className="flex items-center justify-center gap-6 text-white/80">
                 <div className="flex items-center gap-2">
@@ -202,7 +268,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 筛选区 */}
         <section className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b shadow-sm">
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -210,18 +275,13 @@ export default function HomePage() {
                 <Filter className="h-5 w-5" />
                 <span className="font-medium">Filters</span>
               </div>
-
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 <Input
                   placeholder="Search events..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-
-                <Select
-                  value={selectedCampus}
-                  onValueChange={setSelectedCampus}
-                >
+                <Select value={selectedCampus} onValueChange={setSelectedCampus}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Campuses" />
                   </SelectTrigger>
@@ -233,7 +293,6 @@ export default function HomePage() {
                     ))}
                   </SelectContent>
                 </Select>
-
                 <Select
                   value={selectedDietary}
                   onValueChange={setSelectedDietary}
@@ -250,7 +309,6 @@ export default function HomePage() {
                   </SelectContent>
                 </Select>
               </div>
-
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
@@ -266,7 +324,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Event Cards */}
         <section className="container mx-auto px-4 py-12">
           {loading ? (
             <div className="text-center py-20 text-muted-foreground">
@@ -310,42 +367,18 @@ export default function HomePage() {
                           : event.campus}
                       </CardDescription>
                     </CardHeader>
-
                     <CardContent className="space-y-3">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4 shrink-0" />
                         <span className="truncate">{event.location}</span>
                       </div>
-
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4 shrink-0" />
                         <span>
                           {event.start_time} – {event.end_time}
                         </span>
                       </div>
-
-                      <div className="flex flex-wrap gap-1.5 pt-2">
-                        {event.campus && (
-                          <Badge variant="secondary" className="text-xs">
-                            {Array.isArray(event.campus)
-                              ? event.campus[0]
-                              : typeof event.campus === "string"
-                              ? event.campus.replace(/[{}"]/g, "").split(",")[0]
-                              : ""}
-                          </Badge>
-                        )}
-                        {event.dietary && (
-                          <Badge variant="outline" className="text-xs">
-                            {Array.isArray(event.dietary)
-                              ? event.dietary[0]
-                              : typeof event.dietary === "string"
-                              ? event.dietary.replace(/[{}"]/g, "").split(",")[0]
-                              : ""}
-                          </Badge>
-                        )}
-                      </div>
                     </CardContent>
-
                     <CardFooter className="pt-3">
                       <div className="w-full">
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
@@ -365,11 +398,60 @@ export default function HomePage() {
         </section>
       </main>
 
-      <EventDetail
-        event={selectedEvent}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-      />
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        {selectedEvent && (
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">
+                {selectedEvent.title}
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                {selectedEvent.location}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>
+                  {selectedEvent.start_time} – {selectedEvent.end_time}
+                </span>
+              </div>
+              <div className="text-sm">
+                From your campus ({userCampusPreference}):{" "}
+                {selectedEvent.eta === "Unavailable"
+                  ? "ETA unavailable"
+                  : `ETA ${selectedEvent.eta}`}
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {selectedEvent.campus.map((c) => (
+                  <Badge key={c} variant="secondary">
+                    {c}
+                  </Badge>
+                ))}
+                {selectedEvent.dietary.map((d) => (
+                  <Badge key={d} variant="outline">
+                    {d}
+                  </Badge>
+                ))}
+              </div>
+              <div className="pt-4 space-y-3">
+                {selectedEvent.food_items.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between border rounded-md p-2"
+                  >
+                    <span className="font-medium">{item.name}</span>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <span>Remaining: {item.qty}</span>
+                      <Button size="sm">Reserve</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </>
   );
 }
