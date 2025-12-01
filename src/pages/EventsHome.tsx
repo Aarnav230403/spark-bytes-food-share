@@ -2,13 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Clock, MapPin, Users, Calendar, Filter, X } from "lucide-react";
 import Header from "../components/header";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -27,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "../lib/supabaseClient";
+import EventDetail from "../components/EventDetail"; // ✅ 关键：导入你修复过的 EventDetail 组件
 
 type DbEvent = {
   id: number;
@@ -54,7 +48,7 @@ type DetailEvent = {
   notes?: string;
 };
 
-export default function HomePage() {
+export default function EventsHome() {
   const [events, setEvents] = useState<DbEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<DetailEvent | null>(null);
@@ -93,7 +87,8 @@ export default function HomePage() {
         .select("campus_preference")
         .eq("id", user.id)
         .single();
-      if (data?.campus_preference) setUserCampusPreference(data.campus_preference);
+      if (data?.campus_preference)
+        setUserCampusPreference(data.campus_preference);
     }
 
     async function fetchEvents() {
@@ -110,6 +105,7 @@ export default function HomePage() {
     fetchEvents();
   }, []);
 
+  // ✅ 筛选逻辑
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const title = event.title?.toLowerCase() || "";
@@ -142,6 +138,7 @@ export default function HomePage() {
   const hasActiveFilters =
     !!searchQuery || selectedCampus !== "all" || selectedDietary !== "all";
 
+  // ✅ 点击事件卡片，生成详情数据
   function convertEventForDetail(event: DbEvent): DetailEvent {
     const campusArray = Array.isArray(event.campus)
       ? event.campus.map((c) => c.trim())
@@ -161,6 +158,7 @@ export default function HomePage() {
           .map((d) => d.trim())
           .filter(Boolean)
       : [];
+
     const eventCampus = campusArray[0] || "Central Campus";
 
     const ETA_TABLE: Record<string, Record<string, string>> = {
@@ -240,10 +238,12 @@ export default function HomePage() {
     setDetailOpen(true);
   };
 
+  // ✅ 页面主体
   return (
     <>
       <Header />
       <main className="min-h-screen bg-background">
+        {/* Hero 区域 */}
         <section className="relative bg-gradient-hero text-white py-20 lg:py-28">
           <div className="absolute inset-0 bg-foreground/5"></div>
           <div className="container mx-auto px-4 relative z-10">
@@ -268,6 +268,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Filter 区域 */}
         <section className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b shadow-sm">
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -324,6 +325,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Event 列表 */}
         <section className="container mx-auto px-4 py-12">
           {loading ? (
             <div className="text-center py-20 text-muted-foreground">
@@ -398,60 +400,14 @@ export default function HomePage() {
         </section>
       </main>
 
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        {selectedEvent && (
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">
-                {selectedEvent.title}
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                {selectedEvent.location}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 mt-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>
-                  {selectedEvent.start_time} – {selectedEvent.end_time}
-                </span>
-              </div>
-              <div className="text-sm">
-                From your campus ({userCampusPreference}):{" "}
-                {selectedEvent.eta === "Unavailable"
-                  ? "ETA unavailable"
-                  : `ETA ${selectedEvent.eta}`}
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {selectedEvent.campus.map((c) => (
-                  <Badge key={c} variant="secondary">
-                    {c}
-                  </Badge>
-                ))}
-                {selectedEvent.dietary.map((d) => (
-                  <Badge key={d} variant="outline">
-                    {d}
-                  </Badge>
-                ))}
-              </div>
-              <div className="pt-4 space-y-3">
-                {selectedEvent.food_items.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between border rounded-md p-2"
-                  >
-                    <span className="font-medium">{item.name}</span>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span>Remaining: {item.qty}</span>
-                      <Button size="sm">Reserve</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
+      {/* ✅ 使用真正的 EventDetail 弹窗 */}
+      {selectedEvent && (
+        <EventDetail
+          event={selectedEvent}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+        />
+      )}
     </>
   );
 }
