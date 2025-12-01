@@ -42,8 +42,15 @@ export default function CreateEventModal({
     "Nut Free",
     "Shellfish",
   ];
-  const campuses = ["West", "Central", "East", "South", "Fenway", "Medical"];
-
+  // const campuses = ["West", "Central", "East", "South", "Fenway", "Medical"];
+  const campuses = [
+    { name: "West", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561519?s/west?sbc/" },
+    { name: "Central", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561518?s/central?sbc/" },
+    { name: "East", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561520?s/east?sbc/" },
+    { name: "South", url: "https://maps.bu.edu/?id=647#!ce/29650?m/567638?s/south%20?sbc/" },
+    { name: "Fenway", url: "https://maps.bu.edu/?id=647#!ce/29650?m/583837?s/fenway?sbc/" },
+    { name: "Medical", url: "https://maps.bu.edu/?id=647#!ce/33597?m/583838?s/medical?sbc/" }
+  ]
   const addFood = () => {
     if (!foodName.trim()) return;
     setFoodItems((prev) => [
@@ -183,7 +190,17 @@ export default function CreateEventModal({
         </Form.Item>
 
         <Form.Item label="Campus Locations" name="campus">
-          <Checkbox.Group options={campuses.map((c) => `${c} Campus`)} />
+          <Checkbox.Group options={campuses.map((c) => `${c.name} Campus`)} />
+          <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+            View campus locations: {campuses.map((c, idx) => (
+              <span key={c.name}>
+                {idx > 0 && " • "}
+                <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "#1890ff" }}>
+                  {c.name}
+                </a>
+              </span>
+            ))}
+          </div>
         </Form.Item>
 
         <Form.Item label="Available Food Items">
