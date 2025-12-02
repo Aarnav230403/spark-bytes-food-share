@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "../lib/supabaseClient";
-import EventDetail from "../components/EventDetail"; // ✅ 关键：导入你修复过的 EventDetail 组件
+import EventDetail from "../components/EventDetail"; 
 
 type DbEvent = {
   id: number;
@@ -105,7 +105,6 @@ export default function EventsHome() {
     fetchEvents();
   }, []);
 
-  // ✅ 筛选逻辑
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const title = event.title?.toLowerCase() || "";
@@ -138,7 +137,6 @@ export default function EventsHome() {
   const hasActiveFilters =
     !!searchQuery || selectedCampus !== "all" || selectedDietary !== "all";
 
-  // ✅ 点击事件卡片，生成详情数据
   function convertEventForDetail(event: DbEvent): DetailEvent {
     const campusArray = Array.isArray(event.campus)
       ? event.campus.map((c) => c.trim())
@@ -238,12 +236,10 @@ export default function EventsHome() {
     setDetailOpen(true);
   };
 
-  // ✅ 页面主体
   return (
     <>
       <Header />
       <main className="min-h-screen bg-background">
-        {/* Hero 区域 */}
         <section className="relative bg-gradient-hero text-white py-20 lg:py-28">
           <div className="absolute inset-0 bg-foreground/5"></div>
           <div className="container mx-auto px-4 relative z-10">
@@ -268,7 +264,6 @@ export default function EventsHome() {
           </div>
         </section>
 
-        {/* Filter 区域 */}
         <section className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b shadow-sm">
           <div className="container mx-auto px-4 py-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -325,7 +320,6 @@ export default function EventsHome() {
           </div>
         </section>
 
-        {/* Event 列表 */}
         <section className="container mx-auto px-4 py-12">
           {loading ? (
             <div className="text-center py-20 text-muted-foreground">
@@ -400,7 +394,6 @@ export default function EventsHome() {
         </section>
       </main>
 
-      {/* ✅ 使用真正的 EventDetail 弹窗 */}
       {selectedEvent && (
         <EventDetail
           event={selectedEvent}
