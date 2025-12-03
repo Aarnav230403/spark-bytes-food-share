@@ -12,7 +12,6 @@ export default function Header() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
 
-  //fetch the user profile on component mount
   useEffect(() => {
     const fetchUserProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -26,12 +25,17 @@ export default function Header() {
 
       if (profile) {
         setAvatarUrl(profile.avatar_url);
-        setUserName(profile.full_name || user.email?.split('@')[0] || "User");
+        setUserName(profile.full_name || user.email?.split("@")[0] || "User");
       }
     };
 
     fetchUserProfile();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   const menuItems = [
     { key: "events", label: "Events", onClick: () => navigate("/homepage") },
@@ -109,45 +113,69 @@ export default function Header() {
       borderRadius: 8,
       transition: "background-color 0.2s",
     },
+    logoutButton: {
+      backgroundColor: "#d9d9d9",
+      border: "none",
+    },
   };
 
   return (
-    <><header style={styles.header}>
-      <div style={styles.inner}>
-        <button
-          type="button"
-          style={styles.logoButton}
-          onClick={() => navigate("/")}
-        >
-          <div style={styles.logoBox}>TT</div>
-          <h1 style={styles.logoText}>TerrierTable</h1>
-        </button>
-        <Menu mode="horizontal" items={menuItems} style={styles.menu} />
-        <div style={styles.right}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setOpen(true)}
-            style={styles.button}
+    <>
+      <header style={styles.header}>
+        <div style={styles.inner}>
+          <button
+            type="button"
+            style={styles.logoButton}
+            onClick={() => navigate("/")}
           >
-            Create Event
-          </Button>
-          <div
-            style={styles.avatarContainer}
-            onClick={() => navigate("/profile")}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f5f5f5"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-          >
-            <Avatar style={{ width: 36, height: 36 }}>
-              <AvatarImage src={avatarUrl || undefined} alt={userName} />
-              <AvatarFallback style={{ fontSize: 14, backgroundColor: "#CC0000", color: "white" }}>
-                {userName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div style={styles.logoBox}>TT</div>
+            <h1 style={styles.logoText}>TerrierTable</h1>
+          </button>
+
+          <Menu mode="horizontal" items={menuItems} style={styles.menu} />
+
+          <div style={styles.right}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setOpen(true)}
+              style={styles.button}
+            >
+              Create Event
+            </Button>
+
+            <div
+              style={styles.avatarContainer}
+              onClick={() => navigate("/profile")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#f5f5f5")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              <Avatar style={{ width: 36, height: 36 }}>
+                <AvatarImage src={avatarUrl || undefined} alt={userName} />
+                <AvatarFallback
+                  style={{
+                    fontSize: 14,
+                    backgroundColor: "#CC0000",
+                    color: "white",
+                  }}
+                >
+                  {userName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            <Button onClick={handleLogout} style={styles.logoutButton}>
+              Logout
+            </Button>
           </div>
         </div>
-      </div>
-    </header><CreateEventModal open={open} onClose={() => setOpen(false)} />
+      </header>
+
+      <CreateEventModal open={open} onClose={() => setOpen(false)} />
     </>
   );
 }
