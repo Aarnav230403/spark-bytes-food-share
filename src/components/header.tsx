@@ -31,7 +31,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/login");
+    navigate("/index");
   };
 
   const onDropdownClick = ({ key }: { key: string }) => {
