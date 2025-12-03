@@ -178,7 +178,7 @@ export default function Header() {
                   </AvatarFallback>
                 </Avatar>
               </div>
-            </Dropdown>>
+            </Dropdown>
           </div>
         </div>
       </header>
