@@ -1,4 +1,4 @@
-import { Button, Menu } from "antd";
+import { Button, Dropdown, Menu } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -16,19 +16,16 @@ export default function Header() {
     const fetchUserProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data: profile } = await supabase
         .from("profiles")
         .select("avatar_url, full_name")
         .eq("id", user.id)
         .single();
-
       if (profile) {
         setAvatarUrl(profile.avatar_url);
         setUserName(profile.full_name || user.email?.split("@")[0] || "User");
       }
     };
-
     fetchUserProfile();
   }, []);
 
@@ -36,6 +33,16 @@ export default function Header() {
     await supabase.auth.signOut();
     navigate("/login");
   };
+
+  const onDropdownClick = ({ key }: { key: string }) => {
+    if (key === "profile") navigate("/profile");
+    if (key === "logout") handleLogout();
+  };
+
+  const dropdownItems = [
+    { key: "profile", label: "Profile" },
+    { key: "logout", label: "Logout" },
+  ];
 
   const menuItems = [
     { key: "events", label: "Events", onClick: () => navigate("/homepage") },
@@ -144,29 +151,34 @@ export default function Header() {
               Create Event
             </Button>
 
-            <div
-              style={styles.avatarContainer}
-              onClick={() => navigate("/profile")}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "#f5f5f5")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "transparent")
-              }
+            <Dropdown
+              menu={{ items: dropdownItems, onClick: onDropdownClick }}
+              placement="bottomRight"
+              trigger={["click"]}
             >
-              <Avatar style={{ width: 36, height: 36 }}>
-                <AvatarImage src={avatarUrl || undefined} alt={userName} />
-                <AvatarFallback
-                  style={{
-                    fontSize: 14,
-                    backgroundColor: "#CC0000",
-                    color: "white",
-                  }}
-                >
-                  {userName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+              <div
+                style={styles.avatarContainer}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#f5f5f5")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                <Avatar style={{ width: 36, height: 36 }}>
+                  <AvatarImage src={avatarUrl || undefined} alt={userName} />
+                  <AvatarFallback
+                    style={{
+                      fontSize: 14,
+                      backgroundColor: "#CC0000",
+                      color: "white",
+                    }}
+                  >
+                    {userName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </Dropdown>
 
             <Button onClick={handleLogout} style={styles.logoutButton}>
               Logout
