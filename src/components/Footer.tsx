@@ -4,10 +4,10 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="border-t border-white/20 pt-8 text-center text-white/60 text-sm">
           <p className="mb-2">
-            © 2025 Spark Bytes. A BU Spark! project.
+            © 2025 TerrierTable
           </p>
           <p>
-            This is a student-run initiative and not officially affiliated with Boston University.
+            TerrierTable is a student project developed for CS391: Spark! Immersion at Boston University.
           </p>
         </div>
       </div>

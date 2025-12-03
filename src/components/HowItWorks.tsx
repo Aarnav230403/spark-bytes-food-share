@@ -30,9 +30,6 @@ const HowItWorks = () => {
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             How It Works
           </h2>
-          <p className="text-xl text-muted-foreground">
-            Post leftovers → get alerts → enjoy free food
-          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">

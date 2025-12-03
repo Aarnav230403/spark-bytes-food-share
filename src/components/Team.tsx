@@ -15,10 +15,6 @@ const Team = () => {
     <section id="team" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-flex items-center gap-2 bg-accent rounded-full px-6 py-3 mb-6">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-semibold text-primary">Built with BU Spark!</span>
-          </div>
           
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Meet the Team
@@ -78,12 +74,6 @@ const Team = () => {
               </Card>
             ))}
           </div>
-        </div>
-
-        <div className="mt-12 text-center">
-          <p className="text-muted-foreground italic">
-            Spark Bytes is a student project developed through BU Spark!, Boston University's innovation program
-          </p>
         </div>
       </div>
     </section>
