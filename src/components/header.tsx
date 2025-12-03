@@ -178,11 +178,7 @@ export default function Header() {
                   </AvatarFallback>
                 </Avatar>
               </div>
-            </Dropdown>
-
-            <Button onClick={handleLogout} style={styles.logoutButton}>
-              Logout
-            </Button>
+            </Dropdown>>
           </div>
         </div>
       </header>
