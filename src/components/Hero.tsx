@@ -1,15 +1,58 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, BellRing, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 // Image served from project root; Vite serves it at "/Dining Hall.jpg"
 
 const heroStats = [
-  { value: "12 live", label: "events on campus" },
+  { value: "12", label: "live events on campus" },
   { value: "500+", label: "meals shared" },
   { value: "10+", label: "clubs joined" },
 ];
 
 const Hero = () => {
+    const navigate = useNavigate();
+  const [eventsCount, setEventsCount] = useState<number>(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadCount = async () => {
+      const res = await supabase.from("events").select("*", { count: "exact", head: true });
+      if (!mounted) return;
+      setEventsCount(res.count ?? 0);
+    };
+    loadCount();
+    const interval = setInterval(loadCount, 15000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.auth.getUser();
+      setIsAuthenticated(!!data.user);
+    };
+    init();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleBrowseNow = () => {
+    if (isAuthenticated) {
+      navigate("/homepage");
+    } else {
+      navigate("/auth");
+    }
+  };
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-hero">
       <div className="absolute inset-0 bg-foreground/5"></div>
@@ -29,46 +72,20 @@ const Hero = () => {
               TerrierTable alerts students the moment events end with extra food. Grab a plate, meet new people, and help BU cut down on waste with every serving you claim.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/homepage">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-primary hover:bg-white/90 shadow-card-lg text-lg px-8 py-6 h-auto"
-                >
-                  Browse live events
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <a href="#how-it-works">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm text-lg px-8 py-6 h-auto"
-                >
-                  <Play className="mr-2 h-5 w-5" />
-                  See how it works
-                </Button>
-              </a>
+           <div className="mt-10 flex items-center justify-center gap-6">
+              <div className="bg-white/10 rounded-2xl px-10 py-8 text-white backdrop-blur flex flex-col items-center justify-center min-w-[220px] h-full">
+                <div className="text-4xl font-bold">{eventsCount}</div>
+                <div className="text-sm text-white/80 uppercase tracking-wide mt-2">live events on campus</div>
+              </div>
+              </div>
+                <Button
+                onClick={handleBrowseNow}
+              className="bg-white/10 rounded-2xl px-10 py-8 text-white backdrop-blur flex flex-col items-center justify-center min-w-[220px] h-full"               
+               > Join Us Now!
+              </Button>
+            </div>
             </div>
 
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-              {heroStats.map((stat) => (
-                <div key={stat.label} className="bg-white/10 rounded-2xl px-6 py-4 text-white backdrop-blur">
-                  <p className="text-3xl font-bold mb-1">{stat.value}</p>
-                  <p className="text-sm text-white/80 uppercase tracking-wide">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
-              <div className="bg-white/10 rounded-2xl px-6 py-4 text-white backdrop-blur flex items-center gap-3">
-                <Users className="h-8 w-8" />
-                <div>
-                  <p className="text-lg font-semibold">Powered by BU clubs</p>
-                  <p className="text-white/80 text-sm">Student-led & community first</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Hero Image */}
           <div className="relative animate-scale-in">
@@ -91,7 +108,6 @@ const Hero = () => {
               <div className="text-white/90">Clubs Joined</div>
             </div>
           </div>
-        </div>
       </div>
     </section>
   );
