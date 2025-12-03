@@ -72,19 +72,17 @@ const Hero = () => {
               TerrierTable alerts students the moment events end with extra food. Grab a plate, meet new people, and help BU cut down on waste with every serving you claim.
             </p>
             
-           <div className="mt-10 flex items-center justify-center gap-6">
-              <div className="bg-white/10 rounded-2xl px-10 py-8 text-white backdrop-blur flex flex-col items-center justify-center min-w-[220px] h-full">
-                <div className="text-4xl font-bold">{eventsCount}</div>
-                <div className="text-sm text-white/80 uppercase tracking-wide mt-2">live events on campus</div>
-              </div>
-              </div>
-                <Button
-                onClick={handleBrowseNow}
-              className="bg-white/10 rounded-2xl px-10 py-8 text-white backdrop-blur flex flex-col items-center justify-center min-w-[220px] h-full"               
-               > Join Us Now!
-              </Button>
+           <div className="mt-10 flex items-center justify-center">
+          <button
+            onClick={handleBrowseNow}
+            className="bg-white/10 rounded-2xl px-10 py-8 text-white backdrop-blur flex flex-col items-center justify-center min-w-[220px] hover:bg-white/20 transition mb-8"
+          >
+            <div className="text-4xl font-bold">{eventsCount} Live Events</div>
+            <div className="text-sm text-white/80 uppercase tracking-wide mt-2"> 
+              Join us now!
             </div>
-            </div>
+          </button>
+        </div>
 
 
           {/* Hero Image */}
@@ -108,6 +106,8 @@ const Hero = () => {
               <div className="text-white/90">Clubs Joined</div>
             </div>
           </div>
+      </div>
+      </div>
       </div>
     </section>
   );
