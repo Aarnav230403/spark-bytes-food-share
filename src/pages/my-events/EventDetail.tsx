@@ -15,7 +15,7 @@ import { mockReservations } from "@/data/mockManagedEvents";
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const event = id ? mockManagedEvents.find((e) => e.id === id) : undefined;
-  
+
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [checkInCode, setCheckInCode] = useState("");
 
@@ -33,10 +33,10 @@ export default function EventDetail() {
           <div className="text-center max-w-md px-6">
             <h1 className="text-4xl font-bold mb-4">404</h1>
             <p className="text-xl text-muted-foreground mb-6">Event not found</p>
-            <Link to="/my-events">
+            <Link to="/my-activity">
               <Button variant="default">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to My Events
+                Back to My Activity
               </Button>
             </Link>
           </div>
@@ -55,7 +55,7 @@ export default function EventDetail() {
 
   const handleCheckInByCode = () => {
     if (!checkInCode.trim()) return;
-    
+
     const reservation = reservations.find((r) => r.id === checkInCode.trim());
     if (reservation && reservation.status === "reserved") {
       handleCheckIn(reservation.id);
@@ -89,18 +89,18 @@ export default function EventDetail() {
         <div className="container mx-auto px-6 py-8 max-w-6xl">
           {/* Back Link */}
           <Link
-            to="/my-events"
+            to="/my-activity"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Back to My Events</span>
+            <span>Back to My Activity</span>
           </Link>
 
           {/* Event Header */}
           <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
             <h1 className="text-3xl md:text-4xl font-bold mb-3">{event.title}</h1>
             <p className="text-muted-foreground mb-4 leading-relaxed">{event.description}</p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />

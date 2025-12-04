@@ -85,7 +85,7 @@ describe("Header", () => {
 
     expect(navigateMock).toHaveBeenCalledWith("/homepage");
     expect(navigateMock).toHaveBeenCalledWith("/clubs");
-    expect(navigateMock).toHaveBeenCalledWith("/my-events");
+    expect(navigateMock).toHaveBeenCalledWith("/my-activity");
     expect(navigateMock).toHaveBeenCalledWith("/myreservations");
     expect(navigateMock).toHaveBeenCalledWith("/profile");
   });

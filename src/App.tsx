@@ -14,7 +14,7 @@ import ProfilePage from "./pages/Profile";
 import MyReservations from "./pages/MyReservations";
 import ClubsDirectory from "./pages/clubs/index";
 import ClubDetail from "./pages/clubs/ClubDetail";
-import MyEventsDashboard from "./pages/my-events/index";
+// import MyEventsDashboard from "./pages/my-events/index";
 import MyEventDetail from "./pages/my-events/EventDetail";
 import MyActivity from "./pages/MyActivity";
 
@@ -37,7 +37,7 @@ const App = () => (
           <Route path='/myreservations' element={<MyReservations />} />
           <Route path="/clubs" element={<ClubsDirectory />} />
           <Route path="/clubs/:id" element={<ClubDetail />} />
-          <Route path="/my-events" element={<MyEventsDashboard />} />
+          {/* <Route path="/my-events" element={<MyEventsDashboard />} /> */}
           <Route path="/my-events/:id" element={<MyEventDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

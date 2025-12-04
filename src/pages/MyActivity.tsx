@@ -3,19 +3,25 @@ import { Link } from "react-router-dom";
 import { Card, Spin, Empty, message, Statistic } from "antd";
 import { supabase } from "../lib/supabaseClient";
 import Header from "../components/header";
+import MyEventForm from "@/components/MyEventForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, MapPin, Users, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, Users, Heart, Edit, Trash2, Eye } from "lucide-react";
+import { ManagedEvent } from "@/types/events";
 
 type Event = {
     id: string;
     title: string;
     location: string;
     campus: string;
-    pickup_window: string;
+    pickupWindow: string;
     date: string;
-    host_club: string;
-    spots_total: number;
-    spots_taken: number;
+    hostClub: string;
+    spotsTotal: number;
+    spotsTaken: number;
+    description?: string;
+    foodType?: string;
+    dietaryInfo?: string[];
 };
 
 type Club = {
@@ -33,6 +39,23 @@ export default function MyActivity() {
     const [followedClubs, setFollowedClubs] = useState<Club[]>([]);
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
+
+    const fetchEvents = async (userId: string) => {
+        const { data: eventsData, error: eventsError } = await supabase
+            .from("events")
+            .select("*")
+            .eq("created_by", userId)
+            .order("date", { ascending: true });
+
+        if (eventsError) {
+            console.error("Events fetch error:", eventsError);
+            message.error("Failed to load your events");
+        } else {
+            setEvents(eventsData || []);
+        }
+    };
 
     useEffect(() => {
         const fetchActivityData = async () => {
@@ -49,19 +72,7 @@ export default function MyActivity() {
             const user = userData.user;
             setUserId(user.id);
 
-            // Fetch events created by this user
-            const { data: eventsData, error: eventsError } = await supabase
-                .from("events")
-                .select("*")
-                .eq("created_by", user.id)
-                .order("date", { ascending: true });
-
-            if (eventsError) {
-                console.error("Events fetch error:", eventsError);
-                message.error("Failed to load your events");
-            } else {
-                setEvents(eventsData || []);
-            }
+            await fetchEvents(user.id);
 
             // TODO: Fetch followed clubs when club_followers table exists!!!
             // For now using mock data,Talk to team about this
@@ -77,6 +88,47 @@ export default function MyActivity() {
 
         fetchActivityData();
     }, []);
+
+    const handleEditEvent = (event: Event) => {
+        setEditingEvent(event as ManagedEvent);
+        setFormOpen(true);
+    };
+
+    const handleDeleteEvent = async (eventId: string) => {
+        if (window.confirm("Are you sure you want to delete this event?")) {
+            const { error } = await supabase.from("events").delete().eq("id", eventId);
+            if (error) {
+                console.error("Delete failed:", error);
+                message.error("Failed to delete event");
+            } else {
+                setEvents(events.filter((e) => e.id !== eventId));
+                message.success("Event deleted successfully");
+            }
+        }
+    };
+
+    const handleSubmit = async (eventData: Omit<ManagedEvent, "id" | "spotsTaken">) => {
+        if (!userId) return;
+
+        if (editingEvent) {
+            const { error } = await supabase
+                .from("events")
+                .update({ ...eventData })
+                .eq("id", editingEvent.id)
+                .eq("created_by", userId);
+
+            if (error) {
+                console.error("Update failed:", error);
+                message.error("Failed to update event");
+            } else {
+                setEvents(events.map((e) => (e.id === editingEvent.id ? { ...e, ...eventData } : e)));
+                message.success("Event updated successfully");
+            }
+        }
+
+        setFormOpen(false);
+        setEditingEvent(null);
+    };
 
     if (loading) {
         return (
@@ -173,9 +225,6 @@ export default function MyActivity() {
                     <Card className="shadow-lg">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-2xl font-bold text-foreground">My Posted Events</h2>
-                            <Link to="/my-events">
-                                <span className="text-primary hover:underline cursor-pointer text-sm">Manage Events →</span>
-                            </Link>
                         </div>
 
                         {events.length === 0 ? (
@@ -197,42 +246,75 @@ export default function MyActivity() {
                         ) : (
                             <div className="space-y-4">
                                 {events.map((event) => (
-                                    <Link key={event.id} to={`/my-events/${event.id}`}>
-                                        <Card
-                                            className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-primary"
-                                            hoverable
-                                        >
-                                            <div className="flex flex-col md:flex-row justify-between gap-4">
-                                                <div className="flex-1">
-                                                    <h3 className="text-xl font-semibold text-foreground mb-2">{event.title}</h3>
-                                                    <div className="space-y-1 text-sm text-muted-foreground">
-                                                        <div className="flex items-center gap-2">
-                                                            <MapPin className="w-4 h-4" />
-                                                            <span>{event.location} • {event.campus}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <Calendar className="w-4 h-4" />
-                                                            <span>{event.date} • {event.pickup_window}</span>
-                                                        </div>
-                                                        <div className="text-sm">
-                                                            <span className="font-medium">Host:</span> {event.host_club}
-                                                        </div>
+                                    <Card
+                                        key={event.id}
+                                        className="hover:shadow-md transition-shadow border-l-4 border-l-primary"
+                                    >
+                                        <div className="flex flex-col md:flex-row justify-between gap-4">
+                                            <div className="flex-1">
+                                                <h3 className="text-xl font-semibold text-foreground mb-2">{event.title}</h3>
+                                                <div className="space-y-1 text-sm text-muted-foreground">
+                                                    <div className="flex items-center gap-2">
+                                                        <MapPin className="w-4 h-4" />
+                                                        <span>{event.location} {event.campus}</span>
                                                     </div>
-                                                </div>
-                                                <div className="flex flex-col justify-center items-end">
-                                                    <div className="text-sm text-muted-foreground">
-                                                        <span className="font-semibold text-foreground">{event.spots_taken}</span> / {event.spots_total} spots taken
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4" />
+                                                        <span>{event.date} {event.pickupWindow}</span>
+                                                    </div>
+                                                    <div className="text-sm">
+                                                        <span className="font-medium">Host:</span> {event.hostClub}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </Card>
-                                    </Link>
+                                            <div className="flex flex-col md:flex-row md:items-center gap-2">
+                                                <div className="text-sm text-muted-foreground mr-4">
+                                                    <span className="font-semibold text-foreground">{event.spotsTaken}</span> / {event.spotsTotal} spots
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleEditEvent(event)}
+                                                    >
+                                                        <Edit className="h-4 w-4 mr-1" />
+                                                        Edit
+                                                    </Button>
+                                                    <Link to={`/my-events/${event.id}`}>
+                                                        <Button variant="outline" size="sm" >
+                                                            <Eye className="h-4 w-4 mr-1" />
+                                                            Reservations
+                                                        </Button>
+                                                    </Link>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDeleteEvent(event.id)}
+                                                        className="text-destructive hover:text-destructive"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-1" />
+                                                        Delete
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
                                 ))}
                             </div>
                         )}
                     </Card>
                 </div>
             </div>
+
+            <MyEventForm
+                open={formOpen}
+                onClose={() => {
+                    setFormOpen(false);
+                    setEditingEvent(null);
+                }}
+                onSubmit={handleSubmit}
+                event={editingEvent}
+            />
         </>
     );
 }
