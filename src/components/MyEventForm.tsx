@@ -71,7 +71,7 @@ export default function MyEventForm({ open, onClose, onSubmit, event }: MyEventF
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !hostClub || !date || !pickupWindow || !location || !campus) {
       return;
     }
@@ -116,13 +116,12 @@ export default function MyEventForm({ open, onClose, onSubmit, event }: MyEventF
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="hostClub">Host Club *</Label>
+              <Label htmlFor="hostClub">Host Club</Label>
               <Input
                 id="hostClub"
                 value={hostClub}
                 onChange={(e) => setHostClub(e.target.value)}
                 placeholder="e.g. BU Dining"
-                required
               />
             </div>
           </div>
@@ -140,13 +139,12 @@ export default function MyEventForm({ open, onClose, onSubmit, event }: MyEventF
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pickupWindow">Pickup Window *</Label>
+              <Label htmlFor="pickupWindow">Pickup Window</Label>
               <Input
                 id="pickupWindow"
                 value={pickupWindow}
                 onChange={(e) => setPickupWindow(e.target.value)}
                 placeholder="e.g. 6:00 PM – 7:30 PM"
-                required
               />
             </div>
           </div>
