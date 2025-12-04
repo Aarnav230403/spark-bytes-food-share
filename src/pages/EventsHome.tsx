@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "../lib/supabaseClient";
-import EventDetail from "../components/EventDetail"; 
+import EventDetail from "../components/EventDetail";
 
 type DbEvent = {
   id: number;
@@ -93,11 +93,16 @@ export default function EventsHome() {
 
     async function fetchEvents() {
       setLoading(true);
+      const today = new Date().toISOString().split("T")[0]; // 当前日期 yyyy-mm-dd
+      
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .gte("date", today) // ✅ 过滤掉已过期的 events
         .order("date", { ascending: true });
+      
       if (!error && data) setEvents(data as DbEvent[]);
+      else console.error("Error fetching events:", error);
       setLoading(false);
     }
 
