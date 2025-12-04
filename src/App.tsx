@@ -16,6 +16,7 @@ import ClubsDirectory from "./pages/clubs/index";
 import ClubDetail from "./pages/clubs/ClubDetail";
 import MyEventsDashboard from "./pages/my-events/index";
 import MyEventDetail from "./pages/my-events/EventDetail";
+import MyActivity from "./pages/MyActivity";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/update-password" element={<UpdatePassword />} />
           <Route path="/homepage" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/my-activity" element={<MyActivity />} />
           <Route path='/myreservations' element={<MyReservations />} />
           <Route path="/clubs" element={<ClubsDirectory />} />
           <Route path="/clubs/:id" element={<ClubDetail />} />

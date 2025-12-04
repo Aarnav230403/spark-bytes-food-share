@@ -47,6 +47,7 @@ export default function Header() {
   const menuItems = [
     { key: "events", label: "Events", onClick: () => navigate("/homepage") },
     { key: "clubs", label: "Clubs", onClick: () => navigate("/clubs") },
+    { key: "my-activity", label: "My Activity", onClick: () => navigate("/my-activity") },
     { key: "my-events", label: "My Events", onClick: () => navigate("/my-events") },
     { key: "reservations", label: "My Reservations", onClick: () => navigate("/myreservations") },
   ];
