@@ -173,7 +173,7 @@ export default function CreateEventModal({
           name="location"
           rules={[{ required: true, message: "Please enter a location" }]}
         >
-          <Input 
+          <Input
             onChange={(e) => setLocationInput(e.target.value)}
             placeholder="123 Main St, Boston"
           />
@@ -257,12 +257,19 @@ export default function CreateEventModal({
               <Input
                 type="number"
                 min={1}
-                value={foodQty}
-                onChange={(e) =>
-                  setFoodQty(Math.max(1, parseInt(e.target.value || "1", 10)))
-                }
+                value={foodQty === null ? "" : foodQty}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setFoodQty(null); 
+                  } else {
+                    const num = parseInt(val, 10);
+                    setFoodQty(Number.isNaN(num) ? null : num);
+                  }
+                }}
               />
             </Form.Item>
+
 
             <Button
               type="primary"
