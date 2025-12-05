@@ -10,12 +10,23 @@ const Hero = () => {
   useEffect(() => {
     let mounted = true;
     const loadCount = async () => {
-      const res = await supabase.from("events").select("*", { count: "exact", head: true });
+      const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+      const { count, error } = await supabase
+        .from("events")
+        .select("id", { count: "exact", head: true })
+        .gte("date", today); // only upcoming/live events
+
       if (!mounted) return;
-      setEventsCount(res.count ?? 0);
+
+      if (error) {
+        console.error("Error fetching events count:", error);
+        setEventsCount(0);
+      } else {
+        setEventsCount(count ?? 0);
+      }
     };
     loadCount();
-    const interval = setInterval(loadCount, 15000);
+    const interval = setInterval(loadCount, 15000); 
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -63,20 +74,24 @@ const Hero = () => {
           <div className="text-sm text-white/80 uppercase tracking-wide mt-2">Click Here to Join Us Now!</div>
         </button>
 
-        {/* Hero Image */} <div className="relative animate-scale-in"> 
-          <div className="relative rounded-3xl overflow-hidden shadow-card-lg"> 
-            <img src="/Dining Hall.jpg" alt="Students sharing food on campus" className="w-full h-auto object-cover" /> 
-            </div> {/* Floating Stats */} 
-            <div className="absolute -bottom-6 -left-6 bg-card rounded-2xl shadow-card-lg p-6 animate-fade-in-up"> 
-              <div className="text-3xl font-bold text-primary">500+</div> 
-              <div className="text-muted-foreground">Meals Shared</div>
-               </div> 
-               <div className="absolute -top-6 -right-6 bg-secondary rounded-2xl shadow-card-lg p-6 animate-fade-in-up"> 
-                <div className="text-3xl font-bold text-white">10+</div> 
-                <div className="text-white/90">Clubs Joined</div>
+        {/* Hero Image */}
+        <div className="relative animate-scale-in">
+          <div className="relative rounded-3xl overflow-hidden shadow-card-lg">
+            <img src="/Dining Hall.jpg" alt="Students sharing food on campus" className="w-full h-auto object-cover" />
+          </div>
+
+          {/* Floating Stats */}
+          <div className="absolute -bottom-6 -left-6 bg-card rounded-2xl shadow-card-lg p-6 animate-fade-in-up">
+            <div className="text-3xl font-bold text-primary">500+</div>
+            <div className="text-muted-foreground">Meals Shared</div>
+          </div>
+
+          <div className="absolute -top-6 -right-6 bg-secondary rounded-2xl shadow-card-lg p-6 animate-fade-in-up">
+            <div className="text-3xl font-bold text-white">10+</div>
+            <div className="text-white/90">Clubs Joined</div>
+          </div>
         </div>
-        </div>
-        </div>
+      </div>
     </section>
   );
 };
