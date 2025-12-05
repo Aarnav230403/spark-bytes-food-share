@@ -38,7 +38,7 @@ export default function ClubsDirectory() {
     "Greek Life",
     "Academics",
     "Community Service",
-    "Sports",
+    "Club Sports",,
     "Other"];
 
   const campuses = [
