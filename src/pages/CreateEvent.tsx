@@ -10,6 +10,7 @@ import {
   message,
   TimePicker,
   DatePicker,
+  Select,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { supabase } from "../lib/supabaseClient";
@@ -34,7 +35,6 @@ export default function CreateEventModal({
   const [submitting, setSubmitting] = useState(false);
   const [locationInput, setLocationInput] = useState("");
 
-
   const dietary = [
     "Vegan",
     "Gluten Free",
@@ -44,7 +44,7 @@ export default function CreateEventModal({
     "Nut Free",
     "Shellfish",
   ];
-  // const campuses = ["West", "Central", "East", "South", "Fenway", "Medical"];
+
   const campuses = [
     { name: "West", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561519?s/west?sbc/" },
     { name: "Central", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561518?s/central?sbc/" },
@@ -52,7 +52,8 @@ export default function CreateEventModal({
     { name: "South", url: "https://maps.bu.edu/?id=647#!ce/29650?m/567638?s/south%20?sbc/" },
     { name: "Fenway", url: "https://maps.bu.edu/?id=647#!ce/29650?m/583837?s/fenway?sbc/" },
     { name: "Medical", url: "https://maps.bu.edu/?id=647#!ce/33597?m/583838?s/medical?sbc/" }
-  ]
+  ];
+
   const addFood = () => {
     if (!foodName.trim()) return;
     setFoodItems((prev) => [
@@ -69,10 +70,7 @@ export default function CreateEventModal({
   const handleSubmit = async (values: any) => {
     setSubmitting(true);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       setSubmitting(false);
@@ -81,23 +79,16 @@ export default function CreateEventModal({
     }
 
     try {
-      const dietaryArray = values.dietary || [];
-      const campusArray = values.campus || [];
-
       const newEvent = {
         title: values.title,
+        club_host: values.club_hos || null,
         location: values.location,
         date: values.date?.format("YYYY-MM-DD"),
         start_time: values.start?.format("h:mm A"),
         end_time: values.end?.format("h:mm A"),
-
-        dietary: `{${dietaryArray.join(",")}}`,
-        campus: `{${campusArray.join(",")}}`,
-
-        food_items: foodItems.map((f) => ({
-          name: f.name,
-          qty: f.qty,
-        })),
+        dietary: `{${(values.dietary || []).join(",")}}`,
+        campus: values.campus,
+        food_items: foodItems.map((f) => ({ name: f.name, qty: f.qty })),
         created_at: new Date().toISOString(),
         created_by: user.id,
       };
@@ -139,36 +130,67 @@ export default function CreateEventModal({
         </Form.Item>
 
         <Form.Item
-          label="Host Club"
-          name="host_club"
-          rules={[{ required: false, message: "Please enter a host club (if applicable)" }]}
+          label="Club"
+          name="club_host"
+          rules={[{ required: false, message: "Please enter the hosting club (if applicable)" }]}
         >
           <Input />
         </Form.Item>
 
-       <Form.Item
-        label="Location"
-        name="location"
-        rules={[{ required: true, message: "Please enter a location" }]}
-      >
-        <Input 
-          onChange={(e) => setLocationInput(e.target.value)}
-          placeholder="123 Main St, Boston"
-        />
-      </Form.Item>
+        <Form.Item
+          label="Campus Location"
+          name="campus"
+          rules={[{ required: true, message: "Please select a campus location" }]}
+        >
+          <Select placeholder="Select a campus">
+            {campuses.map((c) => (
+              <Select.Option key={c.name} value={`${c.name} Campus`}>
+                {c.name} Campus
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <div style={{ marginTop: 2, marginBottom: 8, fontSize: 12, color: "#666" }}>
+          View campus locations:{" "}
+          {campuses.map((c, idx) => (
+            <span key={c.name}>
+              {idx > 0 && " • "}
+              <a
+                href={c.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#1890ff" }}
+              >
+                {c.name}
+              </a>
+            </span>
+          ))}
+        </div>
+
+        <Form.Item
+          label="Location"
+          name="location"
+          rules={[{ required: true, message: "Please enter a location" }]}
+        >
+          <Input 
+            onChange={(e) => setLocationInput(e.target.value)}
+            placeholder="123 Main St, Boston"
+          />
+        </Form.Item>
         {locationInput.trim() !== "" && (
-  <div style={{ marginBottom: 16 }}>
-    <iframe
-      title="location-map-preview"
-      src={`https://www.google.com/maps?q=${encodeURIComponent(
-        locationInput
-      )}&z=15&output=embed`}
-      width="100%"
-      height="250"
-      style={{ border: 0, borderRadius: 8 }}
-      allowFullScreen
-      loading="lazy"
-      referrerPolicy="no-referrer-when-downgrade"
+          <div style={{ marginBottom: 16 }}>
+            <iframe
+              title="location-map-preview"
+              src={`https://www.google.com/maps?q=${encodeURIComponent(
+                locationInput
+              )}&z=15&output=embed`}
+              width="100%"
+              height="250"
+              style={{ border: 0, borderRadius: 8 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
         )}
@@ -218,20 +240,6 @@ export default function CreateEventModal({
           <Checkbox.Group options={dietary} />
         </Form.Item>
 
-        <Form.Item label="Campus Locations" name="campus">
-          <Checkbox.Group options={campuses.map((c) => `${c.name} Campus`)} />
-          <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
-            View campus locations: {campuses.map((c, idx) => (
-              <span key={c.name}>
-                {idx > 0 && " • "}
-                <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ color: "#1890ff" }}>
-                  {c.name}
-                </a>
-              </span>
-            ))}
-          </div>
-        </Form.Item>
-
         <Form.Item label="Available Food Items">
           <div style={{ display: "flex", gap: 8 }}>
             <Form.Item label="Item" style={{ marginBottom: 0, flex: 1 }}>
@@ -242,30 +250,28 @@ export default function CreateEventModal({
               />
             </Form.Item>
 
-             <Form.Item
-          label="Quantity"
-          style={{ marginBottom: 0, width: 80 }}
-        >
-          <Input
-            type="number"
-            min={1}
-            value={foodQty}
-            onChange={(e) =>
-              setFoodQty(Math.max(1, parseInt(e.target.value || "1", 10)))
-            }
-          />
-        </Form.Item>
+            <Form.Item
+              label="Quantity"
+              style={{ marginBottom: 0, width: 80 }}
+            >
+              <Input
+                type="number"
+                min={1}
+                value={foodQty}
+                onChange={(e) =>
+                  setFoodQty(Math.max(1, parseInt(e.target.value || "1", 10)))
+                }
+              />
+            </Form.Item>
 
-
-        <Button type="primary" onClick={addFood
-          }
-          style={{
-          backgroundColor: "#CC0000",
-          borderColor: "#CC0000",}}
-          >
-          Click to Add
-        </Button>
-      </div>
+            <Button
+              type="primary"
+              onClick={addFood}
+              style={{ backgroundColor: "#CC0000", borderColor: "#CC0000" }}
+            >
+              Click to Add
+            </Button>
+          </div>
           <List
             dataSource={foodItems}
             renderItem={(f) => (
@@ -293,11 +299,11 @@ export default function CreateEventModal({
           <Button onClick={onClose} style={{ marginRight: 8 }}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit" loading={submitting
-      }
-          style={{
-          backgroundColor: "#CC0000",
-          borderColor: "#CC0000",}}
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={submitting}
+            style={{ backgroundColor: "#CC0000", borderColor: "#CC0000" }}
           >
             Create Event
           </Button>
