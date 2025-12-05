@@ -3,12 +3,14 @@ import { PlusOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import CreateEventModal from "@/pages/CreateEvent";
+import CreateClubModal from "@/pages/CreateClub";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function Header() {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [openEvent, setOpenEvent] = useState(false);
+  const [openClub, setOpenClub] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
 
@@ -50,6 +52,21 @@ export default function Header() {
     { key: "my-activity", label: "My Activity", onClick: () => navigate("/my-activity") },
     { key: "reservations", label: "My Reservations", onClick: () => navigate("/myreservations") },
   ];
+
+  const createMenu = {
+    items: [
+      {
+        key: "create_event",
+        label: "Create Event",
+        onClick: () => setOpenEvent(true),
+      },
+      {
+        key: "create_club",
+        label: "Create Club",
+        onClick: () => setClubOpen(true),
+      },
+    ],
+  };
 
   const styles = {
     header: {
@@ -106,6 +123,12 @@ export default function Header() {
       backgroundColor: "#CC0000",
       gap: 4,
     },
+    createButton: {
+      display: "flex",
+      alignItems: "center",
+      backgroundColor: "#CC0000",
+      gap: 4,
+    },
     right: {
       display: "flex",
       alignItems: "center",
@@ -142,14 +165,15 @@ export default function Header() {
           <Menu mode="horizontal" items={menuItems} style={styles.menu} />
 
           <div style={styles.right}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setOpen(true)}
-              style={styles.button}
-            >
-              Create Event
-            </Button>
+            <Dropdown menu={createMenu} placement="bottomRight" trigger={["click"]}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                style={styles.createButton}
+              >
+                Create
+              </Button>
+            </Dropdown>
 
             <Dropdown
               menu={{ items: dropdownItems, onClick: onDropdownClick }}
@@ -182,8 +206,8 @@ export default function Header() {
           </div>
         </div>
       </header>
-
-      <CreateEventModal open={open} onClose={() => setOpen(false)} />
+      <CreateClubModal open={openClub} onClose={() => setOpenClub(false)} />
+      <CreateEventModal open={openEvent} onClose={() => setOpenEvent(false)} />
     </>
   );
 }
