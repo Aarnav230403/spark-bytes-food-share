@@ -42,52 +42,37 @@ export default function EventDetail({
     "Medical Campus": "Boston University Medical Campus, 72 East Concord Street, Boston, MA",
   };
 
-  // ✅ 获取 ETA（使用 Distance Matrix API）
   useEffect(() => {
     async function fetchETA() {
       if (!event) return;
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-
         const { data: profile } = await supabase
           .from("profiles")
           .select("campus_preference")
           .eq("id", user.id)
           .single();
-
-        const origin =
-          locationMap[profile?.campus_preference] ||
-          profile?.campus_preference;
+        const origin = locationMap[profile?.campus_preference] || profile?.campus_preference;
         const eventCampus = event.campus?.[0] || "Central Campus";
-        const destination =
-          locationMap[eventCampus] || eventCampus;
-
+        const destination = locationMap[eventCampus] || eventCampus;
         if (!origin || !destination) return;
-
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
         const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
           origin
-        )}&destinations=${encodeURIComponent(
-          destination
-        )}&mode=walking&key=${apiKey}`;
-
+        )}&destinations=${encodeURIComponent(destination)}&mode=walking&key=${apiKey}`;
         const res = await fetch(url);
         const data = await res.json();
         const duration = data?.rows?.[0]?.elements?.[0]?.duration?.text;
         setEta(duration || "ETA unavailable");
-      } catch (err) {
-        console.error("Error fetching ETA:", err);
+      } catch {
         setEta("ETA unavailable");
       }
     }
     fetchETA();
   }, [event]);
 
-  // ✅ 修复 Reserve 事件逻辑
   async function reserveFood(eventId: number, foodIndex: number) {
-    console.log("Clicked Reserve:", eventId, foodIndex);
-
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       message.error("Please log in first");
@@ -97,7 +82,6 @@ export default function EventDetail({
     const food = event.food_items[foodIndex];
     let qty = 1;
 
-    // ✅ 确保弹窗正常弹出
     Modal.confirm({
       title: `Reserve ${food.name}`,
       content: (
@@ -116,24 +100,25 @@ export default function EventDetail({
       async onOk() {
         try {
           setLoading(true);
-          console.log("Calling Supabase RPC: reserve_food");
-
           const { data, error } = await supabase.rpc("reserve_food", {
             event_id: eventId,
             food_index: foodIndex,
             user_id: user.id,
             qty,
           });
-
           setLoading(false);
 
           if (error) {
-            console.error("Supabase RPC error:", error);
             message.error(error.message || "Reservation failed");
             return;
           }
 
           if (data === "ok") {
+            await supabase.from("reservations").insert({
+              event_id: eventId,
+              user_id: user.id,
+              quantity: qty,
+            });
             message.success(`Reserved ${qty} ${food.name}(s) successfully`);
             event.food_items[foodIndex].qty -= qty;
           } else if (data === "Food unavailable") {
@@ -141,9 +126,8 @@ export default function EventDetail({
           } else {
             message.error(data || "Reservation failed");
           }
-        } catch (err) {
+        } catch {
           setLoading(false);
-          console.error("Error during reservation:", err);
           message.error("Reservation failed");
         }
       },
@@ -160,11 +144,7 @@ export default function EventDetail({
           {event.location} · {event.start_time} – {event.end_time}
         </p>
 
-        {eta && (
-          <p className="text-sm text-muted-foreground mb-2">
-            From your campus: {eta}
-          </p>
-        )}
+        {eta && <p className="text-sm text-muted-foreground mb-2">From your campus: {eta}</p>}
 
         {!!event.campus?.length && (
           <p className="text-sm text-muted-foreground mb-2">
@@ -194,7 +174,6 @@ export default function EventDetail({
                   Remaining: {food.qty}
                 </div>
               </div>
-
               <Button
                 size="sm"
                 type="button"
