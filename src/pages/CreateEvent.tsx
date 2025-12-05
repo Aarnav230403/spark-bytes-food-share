@@ -32,6 +32,8 @@ export default function CreateEventModal({
   const [foodName, setFoodName] = useState("");
   const [foodQty, setFoodQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [locationInput, setLocationInput] = useState("");
+
 
   const dietary = [
     "Vegan",
@@ -137,12 +139,39 @@ export default function CreateEventModal({
         </Form.Item>
 
         <Form.Item
-          label="Location"
-          name="location"
-          rules={[{ required: true, message: "Please enter a location" }]}
+          label="Host Club"
+          name="host_club"
+          rules={[{ required: false, message: "Please enter a host club (if applicable)" }]}
         >
           <Input />
         </Form.Item>
+
+       <Form.Item
+        label="Location"
+        name="location"
+        rules={[{ required: true, message: "Please enter a location" }]}
+      >
+        <Input 
+          onChange={(e) => setLocationInput(e.target.value)}
+          placeholder="123 Main St, Boston"
+        />
+      </Form.Item>
+        {locationInput.trim() !== "" && (
+  <div style={{ marginBottom: 16 }}>
+    <iframe
+      title="location-map-preview"
+      src={`https://www.google.com/maps?q=${encodeURIComponent(
+        locationInput
+      )}&z=15&output=embed`}
+      width="100%"
+      height="250"
+      style={{ border: 0, borderRadius: 8 }}
+      allowFullScreen
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        )}
 
         <Form.Item
           label="Event Date"
