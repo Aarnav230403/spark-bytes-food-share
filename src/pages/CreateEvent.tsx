@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -12,7 +13,6 @@ import {
   DatePicker,
   Select,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
 import { supabase } from "../lib/supabaseClient";
 
 type CreateEventModalProps = {
@@ -21,30 +21,17 @@ type CreateEventModalProps = {
   onCreated?: () => void;
 };
 
-export default function CreateEventModal({
-  open,
-  onClose,
-  onCreated,
-}: CreateEventModalProps) {
+export default function CreateEventModal({ open, onClose, onCreated }: CreateEventModalProps) {
   const [form] = Form.useForm();
-  const [foodItems, setFoodItems] = useState<
-    { id: string; name: string; qty: number }[]
-  >([]);
+  const [foodItems, setFoodItems] = useState<{ id: string; name: string; qty: number }[]>([]);
   const [foodName, setFoodName] = useState("");
   const [foodQty, setFoodQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [locationInput, setLocationInput] = useState("");
+  const [clubs, setClubs] = useState<{ id: number; name: string }[]>([]);
+  const [loadingClubs, setLoadingClubs] = useState(false);
 
-  const dietary = [
-    "Vegan",
-    "Gluten Free",
-    "Vegetarian",
-    "Halal",
-    "Kosher",
-    "Nut Free",
-    "Shellfish",
-  ];
-
+  const dietary = ["Vegan","Gluten Free","Vegetarian","Halal","Kosher","Nut Free","Shellfish"];
   const campuses = [
     { name: "West", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561519?s/west?sbc/" },
     { name: "Central", url: "https://maps.bu.edu/?id=647#!ce/29650?m/561518?s/central?sbc/" },
@@ -54,96 +41,105 @@ export default function CreateEventModal({
     { name: "Medical", url: "https://maps.bu.edu/?id=647#!ce/33597?m/583838?s/medical?sbc/" }
   ];
 
+  useEffect(() => {
+    if (!open) return;
+    const fetchClubs = async () => {
+      setLoadingClubs(true);
+      const { data, error } = await supabase.from("clubs").select("id,name").order("name",{ ascending: true });
+      if (error) {
+        setClubs([]);
+        message.error("Could not load clubs");
+      } else {
+        setClubs(data || []);
+      }
+      setLoadingClubs(false);
+    };
+    fetchClubs();
+  }, [open]);
+
   const addFood = () => {
     if (!foodName.trim()) return;
-    setFoodItems((prev) => [
-      ...prev,
-      { id: Date.now().toString(), name: foodName.trim(), qty: foodQty },
-    ]);
+    setFoodItems(prev => [...prev, { id: Date.now().toString(), name: foodName.trim(), qty: foodQty }]);
     setFoodName("");
     setFoodQty(1);
   };
 
-  const removeFood = (id: string) =>
-    setFoodItems((prev) => prev.filter((f) => f.id !== id));
+  const removeFood = (id: string) => setFoodItems(prev => prev.filter(f => f.id !== id));
 
   const handleSubmit = async (values: any) => {
     setSubmitting(true);
-
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       setSubmitting(false);
       message.error("Please log in first");
       return;
     }
 
-    try {
-      const newEvent = {
-        title: values.title,
-        club_host: values.club_hos || null,
-        location: values.location,
-        date: values.date?.format("YYYY-MM-DD"),
-        start_time: values.start?.format("h:mm A"),
-        end_time: values.end?.format("h:mm A"),
-        dietary: `{${(values.dietary || []).join(",")}}`,
-        campus: values.campus,
-        food_items: foodItems.map((f) => ({ name: f.name, qty: f.qty })),
-        created_at: new Date().toISOString(),
-        created_by: user.id,
-      };
-
-      const { error } = await supabase.from("events").insert([newEvent]);
-
-      if (error) {
-        console.error("Supabase insert error:", error);
-        message.error(`Error creating event: ${error.message}`);
-      } else {
-        message.success("Event created!");
-        form.resetFields();
-        setFoodItems([]);
-        onClose();
-        onCreated?.();
+    // Check if club exists if user typed a value
+    if (values.club) {
+      const clubExists = clubs.some(c => c.name.toLowerCase() === values.club.toLowerCase());
+      if (!clubExists) {
+        message.error("Club does not exist. Please create the club first.");
+        setSubmitting(false);
+        return;
       }
-    } finally {
-      setSubmitting(false);
     }
+
+    const newEvent = {
+      title: values.title,
+      club_host: values.club || null,
+      location: values.location,
+      date: values.date?.format("YYYY-MM-DD"),
+      start_time: values.start?.format("h:mm A"),
+      end_time: values.end?.format("h:mm A"),
+      dietary: `{${(values.dietary || []).join(",")}}`,
+      campus: values.campus,
+      food_items: foodItems.map(f => ({ name: f.name, qty: f.qty })),
+      created_at: new Date().toISOString(),
+      created_by: user.id,
+    };
+
+    const { error } = await supabase.from("events").insert([newEvent]);
+    if (error) {
+      message.error(`Error creating event: ${error.message}`);
+    } else {
+      message.success("Event created!");
+      form.resetFields();
+      setFoodItems([]);
+      onClose();
+      onCreated?.();
+    }
+    setSubmitting(false);
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      title="Create Event"
-      centered
-      width={600}
-      destroyOnClose
-    >
+    <Modal open={open} onCancel={onClose} footer={null} title="Create Event" centered width={600} destroyOnClose>
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item
-          label="Event Title"
-          name="title"
-          rules={[{ required: true, message: "Please enter a title" }]}
-        >
+        <Form.Item label="Event Title" name="title" rules={[{ required: true, message: "Please enter a title" }]}>
           <Input />
         </Form.Item>
 
-        <Form.Item
-          label="Club"
-          name="club_host"
-          rules={[{ required: false, message: "Please enter the hosting club (if applicable)" }]}
-        >
-          <Input />
+        <Form.Item label="Hosting Club" name="club">
+          <Select
+            showSearch
+            allowClear
+            placeholder="Begin typing to search clubs"
+            loading={loadingClubs}
+            options={clubs.map(c => ({ label: c.name, value: c.name }))}
+            dropdownMatchSelectWidth={false}
+            filterOption={(input, option) =>
+              (option?.label || "").toLowerCase().includes((input || "").toLowerCase())
+            }
+          />
+          <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+            If your club is not listed, please create it first.
+          </div>
         </Form.Item>
 
-        <Form.Item
-          label="Campus Location"
-          name="campus"
-          rules={[{ required: true, message: "Please select a campus location" }]}
-        >
+
+        <Form.Item label="Campus Location" name="campus" rules={[{ required: true, message: "Please select a campus location" }]}>
           <Select placeholder="Select a campus">
-            {campuses.map((c) => (
+            {campuses.map(c => (
               <Select.Option key={c.name} value={`${c.name} Campus`}>
                 {c.name} Campus
               </Select.Option>
@@ -151,40 +147,15 @@ export default function CreateEventModal({
           </Select>
         </Form.Item>
 
-        <div style={{ marginTop: 2, marginBottom: 8, fontSize: 12, color: "#666" }}>
-          View campus locations:{" "}
-          {campuses.map((c, idx) => (
-            <span key={c.name}>
-              {idx > 0 && " • "}
-              <a
-                href={c.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "#1890ff" }}
-              >
-                {c.name}
-              </a>
-            </span>
-          ))}
-        </div>
-
-        <Form.Item
-          label="Location"
-          name="location"
-          rules={[{ required: true, message: "Please enter a location" }]}
-        >
-          <Input
-            onChange={(e) => setLocationInput(e.target.value)}
-            placeholder="123 Main St, Boston"
-          />
+        <Form.Item label="Location" name="location" rules={[{ required: true, message: "Please enter a location" }]}>
+          <Input onChange={(e) => setLocationInput(e.target.value)} placeholder="123 Main St, Boston" />
         </Form.Item>
-        {locationInput.trim() !== "" && (
+
+        {locationInput.trim() && (
           <div style={{ marginBottom: 16 }}>
             <iframe
               title="location-map-preview"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(
-                locationInput
-              )}&z=15&output=embed`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(locationInput)}&z=15&output=embed`}
               width="100%"
               height="250"
               style={{ border: 0, borderRadius: 8 }}
@@ -195,43 +166,16 @@ export default function CreateEventModal({
           </div>
         )}
 
-        <Form.Item
-          label="Event Date"
-          name="date"
-          rules={[{ required: true, message: "Please select a date" }]}
-        >
+        <Form.Item label="Event Date" name="date" rules={[{ required: true, message: "Please select a date" }]}>
           <DatePicker format="MMMM D, YYYY" style={{ width: "100%" }} />
         </Form.Item>
 
         <div style={{ display: "flex", gap: 12 }}>
-          <Form.Item
-            label="Pickup Start Time"
-            name="start"
-            rules={[{ required: true, message: "Select start time" }]}
-            style={{ flex: 1 }}
-          >
+          <Form.Item label="Pickup Start Time" name="start" rules={[{ required: true, message: "Select start time" }]} style={{ flex: 1 }}>
             <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
           </Form.Item>
 
-          <Form.Item
-            label="Pickup End Time"
-            name="end"
-            dependencies={["start"]}
-            rules={[
-              { required: true, message: "Select end time" },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  const start = getFieldValue("start");
-                  if (!start || !value) return Promise.resolve();
-                  if (value.isAfter(start)) return Promise.resolve();
-                  return Promise.reject(
-                    new Error("End time must be after start time")
-                  );
-                },
-              }),
-            ]}
-            style={{ flex: 1 }}
-          >
+          <Form.Item label="Pickup End Time" name="end" rules={[{ required: true, message: "Select end time" }]} style={{ flex: 1 }}>
             <TimePicker use12Hours format="h:mm A" style={{ width: "100%" }} />
           </Form.Item>
         </div>
@@ -243,75 +187,23 @@ export default function CreateEventModal({
         <Form.Item label="Available Food Items">
           <div style={{ display: "flex", gap: 8 }}>
             <Form.Item label="Item" style={{ marginBottom: 0, flex: 1 }}>
-              <Input
-                placeholder="Food name"
-                value={foodName}
-                onChange={(e) => setFoodName(e.target.value)}
-              />
+              <Input value={foodName} onChange={(e) => setFoodName(e.target.value)} placeholder="Food name" />
             </Form.Item>
-
-            <Form.Item
-              label="Quantity"
-              style={{ marginBottom: 0, width: 80 }}
-            >
-              <Input
-                type="number"
-                min={1}
-                value={foodQty === null ? "" : foodQty}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "") {
-                    setFoodQty(null); 
-                  } else {
-                    const num = parseInt(val, 10);
-                    setFoodQty(Number.isNaN(num) ? null : num);
-                  }
-                }}
-              />
+            <Form.Item label="Quantity" style={{ marginBottom: 0, width: 80 }}>
+              <Input type="number" min={1} value={foodQty} onChange={(e) => setFoodQty(Number(e.target.value) || 1)} />
             </Form.Item>
-
-
-            <Button
-              type="primary"
-              onClick={addFood}
-              style={{ backgroundColor: "#CC0000", borderColor: "#CC0000" }}
-            >
-              Click to Add
-            </Button>
+            <Button type="primary" onClick={addFood} style={{ backgroundColor: "#CC0000", borderColor: "#CC0000" }}>Add</Button>
           </div>
-          <List
-            dataSource={foodItems}
-            renderItem={(f) => (
-              <List.Item
-                actions={[
-                  <Button
-                    type="link"
-                    danger
-                    onClick={() => removeFood(f.id)}
-                    key="remove"
-                  >
-                    Remove
-                  </Button>,
-                ]}
-                key={f.id}
-              >
-                {f.name} (Quantity: {f.qty})
-              </List.Item>
-            )}
-            style={{ marginTop: 8 }}
-          />
+          <List dataSource={foodItems} renderItem={(f) => (
+            <List.Item actions={[<Button type="link" danger onClick={() => removeFood(f.id)} key="remove">Remove</Button>]} key={f.id}>
+              {f.name} (Qty: {f.qty})
+            </List.Item>
+          )} style={{ marginTop: 8 }} />
         </Form.Item>
 
         <div style={{ textAlign: "right" }}>
-          <Button onClick={onClose} style={{ marginRight: 8 }}>
-            Cancel
-          </Button>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={submitting}
-            style={{ backgroundColor: "#CC0000", borderColor: "#CC0000" }}
-          >
+          <Button onClick={onClose} style={{ marginRight: 8 }}>Cancel</Button>
+          <Button type="primary" htmlType="submit" loading={submitting} style={{ backgroundColor: "#CC0000", borderColor: "#CC0000" }}>
             Create Event
           </Button>
         </div>
