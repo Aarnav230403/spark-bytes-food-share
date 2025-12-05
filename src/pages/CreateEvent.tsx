@@ -239,24 +239,33 @@ export default function CreateEventModal({
                 placeholder="Food name"
                 value={foodName}
                 onChange={(e) => setFoodName(e.target.value)}
-                onPressEnter={addFood}
               />
             </Form.Item>
 
-            <Form.Item label="Qty" style={{ marginBottom: 0 }}>
-              <Input
-                type="number"
-                min={1}
-                value={foodQty}
-                onChange={(e) =>
-                  setFoodQty(parseInt(e.target.value || "1", 10) || 1)
-                }
-                style={{ width: 70 }}
-              />
-            </Form.Item>
+             <Form.Item
+          label="Quantity"
+          style={{ marginBottom: 0, width: 80 }}
+        >
+          <Input
+            type="number"
+            min={1}
+            value={foodQty}
+            onChange={(e) =>
+              setFoodQty(Math.max(1, parseInt(e.target.value || "1", 10)))
+            }
+          />
+        </Form.Item>
 
-            <Button icon={<PlusOutlined />} onClick={addFood} />
-          </div>
+
+        <Button type="primary" onClick={addFood
+          }
+          style={{
+          backgroundColor: "#CC0000",
+          borderColor: "#CC0000",}}
+          >
+          Click to Add
+        </Button>
+      </div>
           <List
             dataSource={foodItems}
             renderItem={(f) => (
@@ -268,12 +277,12 @@ export default function CreateEventModal({
                     onClick={() => removeFood(f.id)}
                     key="remove"
                   >
-                    remove
+                    Remove
                   </Button>,
                 ]}
                 key={f.id}
               >
-                {f.name} (Qty: {f.qty})
+                {f.name} (Quantity: {f.qty})
               </List.Item>
             )}
             style={{ marginTop: 8 }}
@@ -284,7 +293,12 @@ export default function CreateEventModal({
           <Button onClick={onClose} style={{ marginRight: 8 }}>
             Cancel
           </Button>
-          <Button type="primary" htmlType="submit" loading={submitting}>
+          <Button type="primary" htmlType="submit" loading={submitting
+      }
+          style={{
+          backgroundColor: "#CC0000",
+          borderColor: "#CC0000",}}
+          >
             Create Event
           </Button>
         </div>
