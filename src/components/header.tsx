@@ -63,7 +63,7 @@ export default function Header() {
       {
         key: "create_club",
         label: "Create Club",
-        onClick: () => setClubOpen(true),
+        onClick: () => setOpenClub(true),
       },
     ],
   };
