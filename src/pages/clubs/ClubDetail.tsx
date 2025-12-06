@@ -15,11 +15,12 @@ export default function ClubDetail() {
   const [editing, setEditing] = useState(false);
   const [editValues, setEditValues] = useState<any>({});
   const [userId, setUserId] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!error && user) setUserId(user.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setUserId(user.id);
     };
     fetchUser();
   }, []);
@@ -29,99 +30,89 @@ export default function ClubDetail() {
 
     const fetchClub = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("clubs")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching club:", error);
-        setClub(null);
-      } else {
-        setClub(data);
-        setFollowersCount(data?.followers ? Number(data.followers) : 0);
-        setEditValues(data);
-      }
-
+      const { data } = await supabase.from("clubs").select("*").eq("id", id).single();
+      setClub(data);
+      setEditValues(data);
       setLoading(false);
     };
 
-    const fetchEventsCount = async (clubRow: any | null) => {
-      if (!clubRow) {
-        setEventsCount(0);
-        return;
-      }
-
-      try {
-        const byId = await supabase
-          .from("events")
-          .select("id", { count: "exact", head: true })
-          .eq("club_host", id);
-
-        const countById = (byId && (byId.count || 0)) as number;
-
-        if (countById > 0) {
-          setEventsCount(countById);
-          return;
-        }
-
-        const byName = await supabase
-          .from("events")
-          .select("id", { count: "exact", head: true })
-          .eq("club_host", clubRow.name);
-
-        setEventsCount((byName && (byName.count || 0)) as number);
-      } catch (err) {
-        console.error("Error counting events:", err);
-        setEventsCount(null);
-      }
-    };
-
-    fetchClub().then(() => setTimeout(() => fetchEventsCount(club), 0));
+    fetchClub();
   }, [id]);
 
   useEffect(() => {
     if (!id) return;
-    const channel = supabase
-      .channel(`club-detail-${id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "clubs", filter: `id=eq.${id}` },
-        (payload) => {
-          const { eventType, new: newRow } = payload;
-          if (eventType === "UPDATE" || eventType === "INSERT") {
-            setClub(newRow);
-            setFollowersCount(newRow?.followers ? Number(newRow.followers) : 0);
-            setEditValues(newRow);
-          }
-          if (eventType === "DELETE") {
-            setClub(null);
-          }
-        }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
+    const fetchEventsCount = async () => {
+      const byId = await supabase
+        .from("events")
+        .select("id", { count: "exact", head: true })
+        .eq("club_host", id);
+      setEventsCount(byId.count || 0);
     };
+
+    fetchEventsCount();
   }, [id]);
 
-  const isCreator = userId === club?.created_by;
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchFollowerData = async () => {
+      const { count } = await supabase
+        .from("follow_clubs")
+        .select("*", { count: "exact", head: true })
+        .eq("club_id", id);
+      setFollowersCount(count || 0);
+    };
+
+    fetchFollowerData();
+  }, [id]);
+
+  useEffect(() => {
+    if (!id || !userId) return;
+
+    const checkFollowing = async () => {
+      const { data } = await supabase
+        .from("follow_clubs")
+        .select("*")
+        .eq("club_id", id)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      setIsFollowing(!!data);
+    };
+
+    checkFollowing();
+  }, [id, userId]);
+
+  const toggleFollow = async () => {
+    if (!userId) return;
+
+    if (isFollowing) {
+      await supabase
+        .from("follow_clubs")
+        .delete()
+        .eq("club_id", id)
+        .eq("user_id", userId);
+      setIsFollowing(false);
+      setFollowersCount((n) => n - 1);
+    } else {
+      await supabase.from("follow_clubs").insert({
+        user_id: userId,
+        club_id: id,
+      });
+      setIsFollowing(true);
+      setFollowersCount((n) => n + 1);
+    }
+  };
 
   const handleSaveEdit = async () => {
     if (!club) return;
-    try {
-      const { error } = await supabase.from("clubs").update(editValues).eq("id", club.id);
-      if (error) {
-        message.error("Failed to save changes");
-      } else {
-        message.success("Club updated");
-        setClub({ ...club, ...editValues });
-        setEditing(false);
-      }
-    } catch (err) {
-      console.error(err);
+    const { error } = await supabase.from("clubs").update(editValues).eq("id", club.id);
+    if (!error) {
+      message.success("Club updated");
+      setClub({ ...club, ...editValues });
+      setEditing(false);
+    } else {
       message.error("Failed to save changes");
     }
   };
@@ -151,6 +142,8 @@ export default function ClubDetail() {
     );
   }
 
+  const isCreator = userId === club?.created_by;
+
   return (
     <>
       <Header />
@@ -161,7 +154,7 @@ export default function ClubDetail() {
               <img src={club.logo_url} alt={club.name} className="h-20 w-20 rounded-full object-cover" />
             ) : (
               <div className="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center font-bold text-white text-xl">
-                {(club.name || "??").split(" ").map((w: string) => w[0]).join("").slice(0,2)}
+                {(club.name || "??").split(" ").map((w: string) => w[0]).join("").slice(0, 2)}
               </div>
             )}
 
@@ -183,13 +176,24 @@ export default function ClubDetail() {
 
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Followers</div>
-              <div className="text-xl font-semibold">{followersCount?.toLocaleString() ?? 0}</div>
+              <div className="text-xl font-semibold">{followersCount}</div>
               <div className="mt-3">
                 <Link to={`/clubs/${club.id}/events`}>
                   <Button size="sm">View Events</Button>
                 </Link>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6">
+            {!isCreator && (
+              <Button
+                onClick={toggleFollow}
+                className={isFollowing ? "bg-gray-500 hover:bg-gray-600" : ""}
+              >
+                {isFollowing ? "Unfollow" : "Follow"}
+              </Button>
+            )}
           </div>
 
           <div className="mt-6">
@@ -223,13 +227,19 @@ export default function ClubDetail() {
                       <a href={club.website} target="_blank" rel="noreferrer" className="text-sm text-blue-600">
                         {club.website}
                       </a>
-                    ) : <div className="text-sm text-muted-foreground">—</div>}
+                    ) : (
+                      <div className="text-sm text-muted-foreground">—</div>
+                    )}
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground">Contact Email</div>
                     {club.contact_email ? (
-                      <a href={`mailto:${club.contact_email}`} className="text-sm text-blue-600">{club.contact_email}</a>
-                    ) : <div className="text-sm text-muted-foreground">—</div>}
+                      <a href={`mailto:${club.contact_email}`} className="text-sm text-blue-600">
+                        {club.contact_email}
+                      </a>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">—</div>
+                    )}
                   </div>
                 </div>
               </>
@@ -259,29 +269,10 @@ export default function ClubDetail() {
               {editing && (
                 <>
                   <Button onClick={handleSaveEdit}>Save</Button>
-                  <Button variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+                  <Button variant="ghost" onClick={() => setEditing(false)}>
+                    Cancel
+                  </Button>
                 </>
-              )}
-
-              {!isCreator && (
-                <Button
-                  onClick={async () => {
-                    const newCount = (followersCount || 0) + 1;
-                    setFollowersCount(newCount);
-                    try {
-                      const { error } = await supabase
-                        .from("clubs")
-                        .update({ followers: newCount })
-                        .eq("id", club.id);
-
-                      if (error) console.error("Could not update followers:", error);
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                >
-                  Follow
-                </Button>
               )}
             </div>
           </div>
