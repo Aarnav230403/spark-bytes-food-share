@@ -12,11 +12,10 @@ import { Spin, message } from "antd";
 
 type Reservation = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   quantity: number;
   created_at: string;
   full_name?: string;
-  email?: string;
 };
 
 export default function EventDetail() {
@@ -31,6 +30,7 @@ export default function EventDetail() {
       if (!id) return;
       setLoading(true);
 
+      // event 查询：去掉 Number()
       const { data: eventData, error: eventError } = await supabase
         .from("events")
         .select("*")
@@ -43,7 +43,8 @@ export default function EventDetail() {
         return;
       }
 
-      const { data: reservationData, error: reservationError } = await supabase
+      // reservations 查询：同样用字符串匹配 id
+      const { data: reservationRows, error: reservationError } = await supabase
         .from("reservations")
         .select("id, quantity, created_at, user_id")
         .eq("event_id", id);
@@ -54,28 +55,36 @@ export default function EventDetail() {
         return;
       }
 
-      const userIds = reservationData.map((r) => r.user_id);
-      let profilesMap: Record<string, { full_name: string; email: string }> = {};
+      // 获取所有 user_id
+      const userIds = Array.from(new Set((reservationRows || []).map(r => r.user_id).filter(Boolean))) as string[];
+      let profilesMap: Record<string, { full_name: string | null }> = {};
 
+      // 从 profiles 表查名字
       if (userIds.length > 0) {
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
-          .select("id, full_name, email")
+          .select("id, full_name")
           .in("id", userIds);
 
         if (!profilesError && profilesData) {
-          profilesMap = profilesData.reduce((acc, p) => {
-            acc[p.id] = { full_name: p.full_name, email: p.email };
+          profilesMap = profilesData.reduce((acc: Record<string, { full_name: string | null }>, p: any) => {
+            acc[p.id] = { full_name: p.full_name };
             return acc;
-          }, {} as Record<string, { full_name: string; email: string }>);
+          }, {});
         }
       }
 
-      const merged = reservationData.map((r) => ({
-        ...r,
-        full_name: profilesMap[r.user_id]?.full_name || "Anonymous",
-        email: profilesMap[r.user_id]?.email || "No email",
-      }));
+      // 合并
+      const merged: Reservation[] = (reservationRows || []).map((r: any) => {
+        const p = r.user_id ? profilesMap[r.user_id] : undefined;
+        return {
+          id: String(r.id),
+          user_id: r.user_id ?? null,
+          quantity: Number(r.quantity),
+          created_at: r.created_at,
+          full_name: (p?.full_name ?? "") || "Anonymous",
+        };
+      });
 
       setEvent(eventData);
       setReservations(merged);
@@ -86,16 +95,12 @@ export default function EventDetail() {
   }, [id]);
 
   const handleCheckIn = (reservationId: string) => {
-    setReservations(
-      reservations.map((r) =>
-        r.id === reservationId ? { ...r, status: "checked_in" } : r
-      )
-    );
+    setReservations(reservations.map(r => (r.id === reservationId ? { ...r, status: "checked_in" } as any : r)));
   };
 
   const handleCheckInByCode = () => {
     if (!checkInCode.trim()) return;
-    const reservation = reservations.find((r) => r.id === checkInCode.trim());
+    const reservation = reservations.find(r => r.id === checkInCode.trim());
     if (reservation) {
       handleCheckIn(reservation.id);
       setCheckInCode("");
@@ -239,10 +244,6 @@ export default function EventDetail() {
                                 <div className="flex items-center gap-3">
                                   <User className="h-4 w-4 text-muted-foreground" />
                                   <span className="font-medium">{r.full_name}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Mail className="h-3 w-3" />
-                                  <span>{r.email}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <Clock className="h-3 w-3" />
