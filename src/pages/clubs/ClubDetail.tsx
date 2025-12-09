@@ -109,7 +109,7 @@ export default function ClubDetail() {
     if (!club) return;
     const { error } = await supabase.from("clubs").update(editValues).eq("id", club.id);
     if (!error) {
-      message.success("Club updated");
+      message.success("Club updated", 0.8);
       setClub({ ...club, ...editValues });
       setEditing(false);
     } else {

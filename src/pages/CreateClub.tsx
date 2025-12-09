@@ -137,7 +137,7 @@ export default function CreateClubModal({ open, visible, onClose, onCreated }: C
         console.error("Supabase insert error (clubs):", error);
         message.error(`Error creating club: ${error.message}`);
       } else {
-        message.success("Club created!");
+        message.success("Club created!", 0.8);
         form.resetFields();
         setTags([]);
         setLogoFile(null);

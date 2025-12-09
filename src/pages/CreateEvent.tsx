@@ -103,7 +103,7 @@ export default function CreateEventModal({ open, onClose, onCreated }: CreateEve
     if (error) {
       message.error(`Error creating event: ${error.message}`);
     } else {
-      message.success("Event created!");
+      message.success("Event created!", 0.8);
       form.resetFields();
       setFoodItems([]);
       onClose();

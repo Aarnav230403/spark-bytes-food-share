@@ -102,7 +102,7 @@ export default function MyActivity() {
                 message.error("Failed to delete event");
             } else {
                 setEvents(events.filter((e) => e.id !== eventId));
-                message.success("Event deleted successfully");
+                message.success("Event deleted successfully", 0.8);
             }
         }
     };
@@ -122,7 +122,7 @@ export default function MyActivity() {
                 message.error("Failed to update event");
             } else {
                 setEvents(events.map((e) => (e.id === editingEvent.id ? { ...e, ...eventData } : e)));
-                message.success("Event updated successfully");
+                message.success("Event updated successfully", 0.8);
             }
         }
 
