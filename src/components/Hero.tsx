@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
+import hero from "@/assets/Dining Hall.jpg"
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Hero = () => {
       }
     };
     loadCount();
-    const interval = setInterval(loadCount, 15000); 
+    const interval = setInterval(loadCount, 15000);
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -77,7 +78,7 @@ const Hero = () => {
         {/* Hero Image */}
         <div className="relative animate-scale-in">
           <div className="relative rounded-3xl overflow-hidden shadow-card-lg">
-            <img src="/Dining Hall.jpg" alt="Students sharing food on campus" className="w-full h-auto object-cover" />
+            <img src={hero} alt="Students sharing food on campus" className="w-full h-auto object-cover" />
           </div>
 
           {/* Floating Stats */}
