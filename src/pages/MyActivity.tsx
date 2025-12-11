@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Users, Heart, Edit, Trash2, Eye } from "lucide-react";
 import { ManagedEvent } from "@/types/events";
+import CreateEventModal from "@/pages/CreateEvent";
 
 type Event = {
     id: string;
@@ -41,6 +42,7 @@ export default function MyActivity() {
     const [followingCount, setFollowingCount] = useState(0);
     const [formOpen, setFormOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<ManagedEvent | null>(null);
+    const [createEventOpen, setCreateEventOpen] = useState(false);
 
     const fetchEvents = async (userId: string) => {
         const { data: eventsData, error: eventsError } = await supabase
@@ -233,11 +235,12 @@ export default function MyActivity() {
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                             >
                                 <button
-                                    onClick={() => {
-                                        // Trigger create event modal in header
-                                        const createBtn = document.querySelector('[data-testid="create-event-btn"]') as HTMLButtonElement;
-                                        createBtn?.click();
-                                    }}
+                                    // onClick={() => {
+                                    //     // Trigger create event modal in header
+                                    //     const createBtn = document.querySelector('[data-testid="create-event-btn"]') as HTMLButtonElement;
+                                    //     createBtn?.click();
+                                    // }}
+                                    onClickCapture={() => setCreateEventOpen(true)}
                                     className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90"
                                 >
                                     Create Your First Event
@@ -311,6 +314,11 @@ export default function MyActivity() {
                 }}
                 onSubmit={handleSubmit}
                 event={editingEvent}
+            />
+            <CreateEventModal
+                open={createEventOpen}
+                onClose={() => setCreateEventOpen(false)}
+                onCreated={() => { userId && fetchEvents(userId); }}
             />
         </>
     );
