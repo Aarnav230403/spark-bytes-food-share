@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,11 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabaseClient";// Import supabase client
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(searchParams.get("tab") !== "signup");
   // added to navigate after to a new page
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   // Added sign-up fields + error state
   const [fullName, setFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
