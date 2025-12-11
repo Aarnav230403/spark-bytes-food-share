@@ -12,21 +12,17 @@ export default function MyReservations() {
     fetchReservations();
   }, []);
 
-  // Fetch reservations of current user
   async function fetchReservations() {
     setLoading(true);
-
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
-
     if (authError || !user) {
       setLoading(false);
       return;
     }
 
-    // Fetch reservation rows
     const { data: reservations, error } = await supabase
       .from("my_reservation")
       .select("*")
@@ -40,8 +36,6 @@ export default function MyReservations() {
     }
 
     setItems(reservations || []);
-
-    // Fetch associated events
     const eventIds = [...new Set((reservations || []).map((r) => r.event_id))];
 
     if (eventIds.length > 0) {
@@ -49,7 +43,6 @@ export default function MyReservations() {
         .from("events")
         .select("*")
         .in("id", eventIds);
-
       if (eventsError) {
         console.error("Error loading events:", eventsError);
       } else {
@@ -58,29 +51,42 @@ export default function MyReservations() {
     } else {
       setEvents([]);
     }
-
     setLoading(false);
   }
 
-  // Cancel Reservation
   async function cancelReservation(id: string) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data: myRes, error: myResError } = await supabase
+      .from("my_reservation")
+      .select("event_id")
+      .eq("id", id)
+      .single();
+    if (myResError || !myRes) {
+      message.error("Failed to find reservation");
+      return;
+    }
+
     const { error } = await supabase.rpc("cancel_reservation", {
       reservation_id: id,
     });
-
     if (error) {
       console.error(error);
       message.error("Failed to cancel reservation");
       return;
     }
 
-    message.success("Reservation cancelled", 0.8);
+    await supabase
+      .from("reservations")
+      .delete()
+      .eq("event_id", myRes.event_id)
+      .eq("user_id", user.id);
 
-    // Refresh reservations + events
+    message.success("Reservation cancelled", 0.8);
     fetchReservations();
   }
 
-  // Find event by id
   function getEvent(event_id: string | number) {
     return events.find((e) => e.id == event_id);
   }
@@ -90,7 +96,6 @@ export default function MyReservations() {
       <Header />
       <main style={{ padding: 24 }}>
         <h1 style={{ fontSize: 28, marginBottom: 20 }}>My Reservations</h1>
-
         {loading ? (
           <Spin size="large" />
         ) : items.length === 0 ? (
@@ -98,31 +103,25 @@ export default function MyReservations() {
         ) : (
           items.map((r) => {
             const event = getEvent(r.event_id);
-
             return (
               <Card key={r.id} style={{ marginBottom: 16 }}>
                 <h3>{event?.title || "Event Deleted"}</h3>
-
                 <p>
                   <strong>Location: </strong>
                   {event?.location || "Unknown"}
                 </p>
-
                 <p>
                   <strong>Pickup Time: </strong>
                   {event?.start_time || "?"} – {event?.end_time || "?"}
                 </p>
-
                 <p>
                   <strong>Food Item: </strong>
                   {r.food_name}
                 </p>
-
                 <p>
                   <strong>Reserved Qty: </strong>
                   {r.qty}
                 </p>
-
                 <Button
                   danger
                   style={{ marginTop: 12 }}
@@ -130,7 +129,6 @@ export default function MyReservations() {
                 >
                   Cancel Reservation
                 </Button>
-
                 <p style={{ fontSize: 12, color: "#999", marginTop: 12 }}>
                   Reserved at: {new Date(r.created_at).toLocaleString()}
                 </p>

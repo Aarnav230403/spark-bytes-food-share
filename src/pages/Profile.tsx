@@ -136,7 +136,7 @@ export default function ProfilePage() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
-      message.success('Profile picture updated!');
+      message.success('Profile picture updated!', 0.8);
     } catch (error) {
       console.error('Avatar upload error:', error);
       message.error('Failed to upload profile picture');
@@ -170,7 +170,7 @@ export default function ProfilePage() {
       console.error("Update failed:", error.message);
       message.error("Failed to update profile");
     } else {
-      message.success("Profile updated successfully!");
+      message.success("Profile updated successfully!", 0.8);
     }
 
     setSaving(false);

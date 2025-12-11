@@ -119,7 +119,7 @@ export default function EventDetail({
               user_id: user.id,
               quantity: qty,
             });
-            message.success(`Reserved ${qty} ${food.name}(s) successfully`);
+            message.success(`Reserved ${qty} ${food.name}(s) successfully`, 0.8);
             event.food_items[foodIndex].qty -= qty;
           } else if (data === "Food unavailable") {
             message.warning("This item is sold out");
