@@ -25,7 +25,6 @@ import EventDetail from "../components/EventDetail";
 type DbEvent = {
   id: number;
   title: string;
-  club_host?: string | null;
   location: string;
   date: string | null;
   start_time: string | null;
@@ -39,7 +38,6 @@ type DbEvent = {
 type DetailEvent = {
   id: number;
   title: string;
-  club_host?: string | null;
   location: string;
   start_time: string;
   end_time: string;

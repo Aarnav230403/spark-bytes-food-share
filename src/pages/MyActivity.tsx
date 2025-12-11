@@ -268,9 +268,6 @@ export default function MyActivity() {
                                                 </div>
                                             </div>
                                             <div className="flex flex-col md:flex-row md:items-center gap-2">
-                                                <div className="text-sm text-muted-foreground mr-4">
-                                                    <span className="font-semibold text-foreground">{event.spotsTaken}</span> / {event.spotsTotal} spots
-                                                </div>
                                                 <div className="flex gap-2">
                                                     <Button
                                                         variant="outline"

@@ -69,11 +69,19 @@ const Navbar = () => {
               </Button>
             </>
           ) : (
-            <Link to="/auth">
-              <Button variant="outline" size="sm">
-                Log In
-              </Button>
-            </Link>
+            <>
+              <Link to="/auth">
+                <Button variant="outline" size="sm">
+                  Log In
+                </Button>
+              </Link>
+
+              <Link to="/auth?tab=signup">
+                <Button size="sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>
